@@ -446,6 +446,20 @@ select.ai{cursor:pointer}
 .share-close{position:absolute;top:16px;right:18px;background:none;border:none;font-size:20px;color:var(--sub);cursor:pointer;line-height:1}
 
 
+
+/* ── SIGNUP SCREEN ── */
+#screen-signup{background:linear-gradient(165deg,#dde6f0,#f5f4f1 55%);align-items:center;justify-content:flex-start;padding:max(40px,calc(50vh - 340px)) 20px 40px;overflow-y:auto}
+.signup-back{font-size:12px;color:var(--gold-lt);font-weight:600;cursor:pointer;margin-bottom:16px;display:inline-flex;align-items:center;gap:5px}
+.signup-back:hover{color:var(--navy)}
+.pending-badge{display:inline-flex;align-items:center;justify-content:center;background:#dc2626;color:#fff;font-size:9px;font-weight:700;border-radius:50%;width:16px;height:16px;margin-left:4px;line-height:1}
+.pending-row{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.pending-av{width:34px;height:34px;border-radius:50%;background:#fed7aa;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c2410c;flex-shrink:0}
+.pending-info{flex:1;min-width:0}
+.pending-name{font-size:13px;font-weight:600;color:var(--text)}
+.pending-meta{font-size:11px;color:var(--sub)}
+.pending-actions{display:flex;gap:6px}
+.btn-approve{background:#16a34a;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer}
+.btn-deny{background:#f9f8f5;color:#dc2626;border:1px solid #fca5a5;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer}
 </style>
 </head>
 <body>
@@ -468,6 +482,46 @@ select.ai{cursor:pointer}
     <input class="form-input" id="li-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
     <button class="btn-primary" onclick="doLogin()">Sign In</button>
     <div class="login-error" id="li-err"></div>
+    <div style="text-align:center;margin-top:14px">
+      <span style="font-size:12px;color:var(--sub)">Don't have an account? </span>
+      <span style="font-size:12px;color:var(--gold-lt);font-weight:600;cursor:pointer" onclick="showSignup()">Request Access</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- SIGNUP REQUEST SCREEN -->
+<div id="screen-signup" class="screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-mark">↗</div>
+      <div class="login-wordmark">MarketReady <span>Stats</span></div>
+      <div class="login-sub">Request Portal Access</div>
+    </div>
+    <div style="font-size:12px;color:var(--sub);text-align:center;margin-bottom:20px;line-height:1.6">Fill out the form below. Your account will be active once approved by the admin.</div>
+    <label class="form-label">First Name</label>
+    <input class="form-input" id="su-first" placeholder="Jane"/>
+    <label class="form-label">Last Name</label>
+    <input class="form-input" id="su-last" placeholder="Smith"/>
+    <label class="form-label">Email</label>
+    <input class="form-input" id="su-email" type="email" placeholder="jane@company.com"/>
+    <label class="form-label">Phone</label>
+    <input class="form-input" id="su-phone" type="tel" placeholder="(480) 555-1234"/>
+    <label class="form-label">Company / Brokerage</label>
+    <input class="form-input" id="su-company" placeholder="Great American Title Agency"/>
+    <label class="form-label">Role</label>
+    <select class="form-input" id="su-role" style="color:var(--text2)">
+      <option value="agent">Real Estate Agent</option>
+      <option value="rep">Sales Rep / Title Rep</option>
+      <option value="broker">Broker</option>
+      <option value="other">Other</option>
+    </select>
+    <button class="btn-primary" style="margin-top:6px" onclick="submitSignupRequest()">Request Access</button>
+    <div class="login-error" id="su-err"></div>
+    <div style="text-align:center;margin-top:14px">
+      <span style="font-size:12px;color:var(--sub)">Already have an account? </span>
+      <span style="font-size:12px;color:var(--gold-lt);font-weight:600;cursor:pointer" onclick="showLogin()">Sign In</span>
+    </div>
   </div>
 </div>
 
@@ -1397,6 +1451,7 @@ function resetEJS(){ss('mrs_ejs',null);loadEJSStatus();}
 /* ADMIN */
 function loadAdmin(){
   loadEconAdmin();
+  renderPendingRequests();
   renderAdminCitySelect();
   renderAdminUsers();
   loadAdminEJSStatus();
@@ -1734,6 +1789,163 @@ function loadEconAdmin(){
 
 
 
+
+
+// ── SIGNUP REQUEST FLOW ──
+function getPending(){ return gs('mrs_pending', []); }
+function savePending(p){ ss('mrs_pending', p); }
+
+function showSignup(){
+  hide('screen-login');
+  show('screen-signup');
+  ['su-first','su-last','su-email','su-phone','su-company'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('su-err').style.display='none';
+}
+function showLogin(){
+  hide('screen-signup');
+  show('screen-login');
+}
+
+async function submitSignupRequest(){
+  const first=document.getElementById('su-first').value.trim();
+  const last=document.getElementById('su-last').value.trim();
+  const email=document.getElementById('su-email').value.trim().toLowerCase();
+  const phone=document.getElementById('su-phone').value.trim();
+  const company=document.getElementById('su-company').value.trim();
+  const role=document.getElementById('su-role').value;
+  const errEl=document.getElementById('su-err');
+  errEl.style.display='none';
+
+  if(!first||!last||!email||!company){
+    errEl.textContent='Please fill in all required fields.';
+    errEl.style.display='block';
+    return;
+  }
+  if(!email.includes('@')){
+    errEl.textContent='Please enter a valid email address.';
+    errEl.style.display='block';
+    return;
+  }
+
+  // Check not already a user
+  const users=getUsers();
+  if(users[email]||email===SA.email){
+    errEl.textContent='An account with that email already exists. Please sign in.';
+    errEl.style.display='block';
+    return;
+  }
+
+  // Check not already pending
+  const pending=getPending();
+  if(pending.find(p=>p.email===email)){
+    errEl.textContent='A request for this email is already pending approval.';
+    errEl.style.display='block';
+    return;
+  }
+
+  // Save pending request
+  const req={ first, last, email, phone, company, role, requestedAt: new Date().toISOString(), id: Date.now() };
+  pending.push(req);
+  savePending(pending);
+
+  // Email admin notification
+  await notifyAdminOfRequest(req);
+
+  // Show success
+  hide('screen-signup');
+  show('screen-login');
+  toast('Request submitted! You will be notified by email once approved.', 'success');
+  document.getElementById('li-email').value = email;
+}
+
+async function notifyAdminOfRequest(req){
+  const cfg=gs('mrs_admin_ejs',null);
+  if(!cfg) return;
+  try{
+    emailjs.init(cfg.pub);
+    await emailjs.send(cfg.svc, cfg.tmpl, {
+      to_name: 'Braydon Dennis',
+      to_email: 'braydondennis@gmail.com',
+      from_name: 'MarketReady Stats Portal',
+      message: 'New access request from ' + req.first + ' ' + req.last + ' (' + req.email + ') — ' + req.company + ' · ' + req.role + '. Log in to approve or deny at ' + window.location.origin,
+      user_email: req.email,
+      user_pass: '',
+      portal_url: window.location.origin,
+    });
+  } catch(e){ console.log('Admin notify failed:', e); }
+}
+
+function renderPendingRequests(){
+  const pending = getPending();
+  const el = document.getElementById('pending-list');
+  const header = document.getElementById('pending-sec-header');
+  if(!el) return;
+
+  // Update badge in header
+  if(header){
+    const existing = header.querySelector('.pending-badge');
+    if(existing) existing.remove();
+    if(pending.length > 0){
+      header.innerHTML = 'Pending Requests <span class="pending-badge">' + pending.length + '</span>';
+    } else {
+      header.textContent = 'Pending Requests';
+    }
+  }
+
+  if(!pending.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--sub);text-align:center;padding:12px 0">No pending requests</div>';
+    return;
+  }
+
+  el.innerHTML = pending.map(r => `
+    <div class="pending-row" id="pr-${r.id}">
+      <div class="pending-av">${(r.first[0]||'?').toUpperCase()}</div>
+      <div class="pending-info">
+        <div class="pending-name">${r.first} ${r.last}</div>
+        <div class="pending-meta">${r.email} &middot; ${r.company} &middot; ${r.role}</div>
+        <div class="pending-meta" style="color:#9ca3af">${new Date(r.requestedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+      </div>
+      <div class="pending-actions">
+        <button class="btn-approve" onclick="approveRequest('${r.id}')">Approve</button>
+        <button class="btn-deny" onclick="denyRequest('${r.id}')">Deny</button>
+      </div>
+    </div>`).join('');
+}
+
+async function approveRequest(id){
+  const pending = getPending();
+  const req = pending.find(p => String(p.id) === String(id));
+  if(!req) return;
+
+  // Generate a password
+  const pass = req.first.toLowerCase() + Math.floor(1000 + Math.random()*9000);
+
+  // Create the user
+  const users = getUsers();
+  users[req.email] = {
+    first: req.first, last: req.last, email: req.email, pass,
+    profile: { first: req.first, last: req.last, email: req.email, title: req.role, company: req.company, phone: req.phone||'' },
+    contacts: [], createdAt: new Date().toISOString()
+  };
+  saveUsers(users);
+
+  // Remove from pending
+  savePending(pending.filter(p => String(p.id) !== String(id)));
+
+  // Send welcome email with credentials
+  await sendWelcomeEmail(users[req.email]);
+
+  renderPendingRequests();
+  renderAdminUsers();
+  toast('Approved ' + req.first + '! Welcome email sent.', 'success');
+}
+
+function denyRequest(id){
+  if(!confirm('Deny and remove this request?')) return;
+  savePending(getPending().filter(p => String(p.id) !== String(id)));
+  renderPendingRequests();
+  toast('Request denied and removed.', 'info');
+}
 
 // -- AI MARKET REFRESH --
 async function runAIRefresh(){
