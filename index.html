@@ -460,6 +460,37 @@ select.ai{cursor:pointer}
 .pending-actions{display:flex;gap:6px}
 .btn-approve{background:#16a34a;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer}
 .btn-deny{background:#f9f8f5;color:#dc2626;border:1px solid #fca5a5;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer}
+
+/* ── CSV IMPORT ── */
+.csv-import-zone{border:2px dashed var(--border2);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:all .2s;background:#f9f8f5;margin-bottom:10px}
+.csv-import-zone:hover,.csv-import-zone.drag{border-color:var(--gold);background:var(--gold-dim)}
+.csv-import-icon{font-size:24px;margin-bottom:6px}
+.csv-import-lbl{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:2px}
+.csv-import-sub{font-size:11px;color:var(--sub)}
+.csv-preview-table{width:100%;font-size:11px;border-collapse:collapse;margin:10px 0}
+.csv-preview-table th{background:var(--navy);color:#fff;padding:5px 8px;text-align:left;font-weight:600}
+.csv-preview-table td{padding:4px 8px;border-bottom:1px solid #f0ede8;color:var(--text2)}
+.csv-preview-table tr:nth-child(even) td{background:#f9f8f5}
+.csv-map-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+.csv-map-row label{width:80px;color:var(--sub);font-weight:600;flex-shrink:0}
+.csv-map-row select{flex:1;font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#fff}
+
+/* ── CAMPAIGN / SCHEDULE ── */
+.campaign-card{background:#fff;border:2px solid var(--navy);border-radius:14px;padding:16px;margin-bottom:14px}
+.campaign-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.campaign-card-title{font-size:13px;font-weight:700;color:var(--navy)}
+.campaign-status{font-size:10px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:20px;text-transform:uppercase}
+.campaign-status.active{background:#dcfce7;color:#16a34a}
+.campaign-status.paused{background:#fef3c7;color:#d97706}
+.campaign-status.inactive{background:#f1f5f9;color:#64748b}
+.cadence-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.cadence-btn{padding:10px 6px;border:2px solid var(--border);border-radius:10px;background:#fff;font-size:11px;font-weight:600;color:var(--sub);cursor:pointer;text-align:center;transition:all .15s}
+.cadence-btn.active{border-color:var(--navy);background:var(--navy);color:#fff}
+.template-customizer{background:#f9f8f5;border-radius:10px;padding:12px;margin-bottom:12px}
+.template-customizer label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);display:block;margin-bottom:4px;margin-top:10px}
+.template-customizer label:first-child{margin-top:0}
+.template-customizer input,.template-customizer textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;background:#fff;color:var(--text2);resize:vertical}
+.next-send-info{font-size:11px;color:var(--sub);text-align:center;padding:6px;border-top:1px solid var(--border);margin-top:8px}
 </style>
 </head>
 <body>
@@ -628,6 +659,7 @@ select.ai{cursor:pointer}
       <div class="contacts-toolbar">
         <input class="contact-search" id="contact-search" placeholder="Search clients…" oninput="renderContacts()"/>
         <button class="btn-gold" onclick="openModal('add-contact')">+ Add</button>
+        <button class="btn-ghost" onclick="openModal('csv-import')" style="font-size:11px">📥 CSV</button>
       </div>
       <div class="contacts-meta" id="contact-count">0 Contacts</div>
       <div class="contact-list-wrap"><div id="contact-list"></div></div>
@@ -646,9 +678,43 @@ select.ai{cursor:pointer}
       <div class="send-body">
         <div class="sec-lbl" style="margin-top:4px">Select Market</div>
         <div class="send-city-strip"><div id="send-city-tabs"></div></div>
+
+        <!-- TEMPLATE CUSTOMIZER -->
+        <div class="campaign-card">
+          <div class="campaign-card-head">
+            <div class="campaign-card-title">Customize Email</div>
+          </div>
+          <div class="template-customizer">
+            <label>Subject Line</label>
+            <input id="tmpl-subject" placeholder="Arizona Real Estate Update — {{month}}" oninput="saveTmplDraft()"/>
+            <label>Intro Message (personal note to clients)</label>
+            <textarea id="tmpl-intro" rows="3" placeholder="Hi {{first_name}}, here is your monthly market update for {{city}}…" oninput="saveTmplDraft()"></textarea>
+            <label>Sign-off</label>
+            <input id="tmpl-signoff" placeholder="Always here to help — reach out anytime!" oninput="saveTmplDraft()"/>
+          </div>
+        </div>
+
         <div class="sec-lbl">Email Preview</div>
         <div id="email-preview"></div>
-        <button class="send-btn" id="send-btn" onclick="sendReport()">Send Report to All Contacts</button>
+        <button class="send-btn" id="send-btn" onclick="sendReport()">📤 Send Now to All Contacts</button>
+
+        <!-- CAMPAIGN SCHEDULER -->
+        <div class="campaign-card" style="margin-top:14px">
+          <div class="campaign-card-head">
+            <div class="campaign-card-title">📅 Scheduled Campaign</div>
+            <div class="campaign-status inactive" id="campaign-status-badge">Inactive</div>
+          </div>
+          <div style="font-size:11px;color:var(--sub);margin-bottom:12px;line-height:1.6">Auto-send this market report to all your contacts on a set schedule. Requires Netlify + Anthropic API key configured.</div>
+          <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Send Cadence</div>
+          <div class="cadence-grid">
+            <div class="cadence-btn active" id="cad-weekly" onclick="setCadence('weekly')">Weekly<br><span style="font-size:9px;font-weight:400;opacity:.7">Every Monday</span></div>
+            <div class="cadence-btn" id="cad-biweekly" onclick="setCadence('biweekly')">Bi-Weekly<br><span style="font-size:9px;font-weight:400;opacity:.7">Every 2 weeks</span></div>
+            <div class="cadence-btn" id="cad-monthly" onclick="setCadence('monthly')">Monthly<br><span style="font-size:9px;font-weight:400;opacity:.7">1st of month</span></div>
+            <div class="cadence-btn" id="cad-bimonthly" onclick="setCadence('bimonthly')">Bi-Monthly<br><span style="font-size:9px;font-weight:400;opacity:.7">Every 2 months</span></div>
+          </div>
+          <button class="btn-gold btn-full" id="campaign-toggle-btn" onclick="toggleCampaign()">Activate Scheduled Sending</button>
+          <div class="next-send-info" id="campaign-next-send" style="display:none"></div>
+        </div>
       </div>
     </div>
 
@@ -1221,7 +1287,7 @@ function showTab(name,btn){
   document.getElementById('panel-'+name)?.classList.add('active');
   if(btn)btn.classList.add('active');
   document.getElementById('app-body').scrollTop=0;
-  if(name==='send')updateSendPanel();
+  if(name==='send'){updateSendPanel();loadTmplDraft();loadCampaignState();}
   if(name==='stats')renderEconCards();
 }
 
@@ -1989,6 +2055,221 @@ async function runAIRefresh(){
   }
 }
 
+
+// ── CSV IMPORT ──
+let _csvRows = [], _csvHeaders = [];
+
+function handleCSVDrop(e){
+  e.preventDefault();
+  document.getElementById('csv-drop-zone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if(file) parseCSVFile(file);
+}
+function handleCSVFile(input){
+  const file = input.files[0];
+  if(file) parseCSVFile(file);
+}
+function parseCSVFile(file){
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const text = e.target.result;
+    const lines = text.trim().split(/\r?\n/);
+    if(lines.length < 2){ showCSVErr('File must have at least a header row and one data row.'); return; }
+    _csvHeaders = lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+    _csvRows = lines.slice(1).map(l=>{
+      const vals=[]; let cur='', inQ=false;
+      for(const ch of l){ if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}else{cur+=ch;} }
+      vals.push(cur.trim());
+      return _csvHeaders.reduce((o,h,i)=>({...o,[h]:vals[i]||''}),{});
+    }).filter(r=>Object.values(r).some(v=>v));
+
+    // Populate column selectors
+    const opts = _csvHeaders.map(h=>`<option value="${h}">${h}</option>`).join('');
+    document.getElementById('csv-col-name').innerHTML = opts;
+    document.getElementById('csv-col-email').innerHTML = opts;
+
+    // Auto-detect common column names
+    const nameGuess = _csvHeaders.find(h=>/name|first|full/i.test(h)) || _csvHeaders[0];
+    const emailGuess = _csvHeaders.find(h=>/email|mail/i.test(h)) || _csvHeaders[1];
+    document.getElementById('csv-col-name').value = nameGuess;
+    document.getElementById('csv-col-email').value = emailGuess;
+
+    document.getElementById('csv-map-section').style.display = '';
+    document.getElementById('csv-import-btn').style.display = '';
+    document.getElementById('csv-preview-label').textContent = _csvRows.length + ' rows found — preview:';
+    renderCSVPreview();
+    document.getElementById('csv-import-err').style.display = 'none';
+  };
+  reader.readAsText(file);
+}
+function renderCSVPreview(){
+  const nameCol = document.getElementById('csv-col-name').value;
+  const emailCol = document.getElementById('csv-col-email').value;
+  const preview = _csvRows.slice(0,5);
+  const wrap = document.getElementById('csv-preview-wrap');
+  wrap.innerHTML = `<table class="csv-preview-table">
+    <thead><tr><th>Name</th><th>Email</th></tr></thead>
+    <tbody>${preview.map(r=>`<tr><td>${r[nameCol]||'—'}</td><td>${r[emailCol]||'—'}</td></tr>`).join('')}</tbody>
+  </table>${_csvRows.length>5?`<div style="font-size:10px;color:var(--sub);text-align:center;padding:4px">...and ${_csvRows.length-5} more</div>`:''}`;
+}
+function doCSVImport(){
+  const nameCol = document.getElementById('csv-col-name').value;
+  const emailCol = document.getElementById('csv-col-email').value;
+  const existing = getContacts();
+  const existingEmails = new Set(existing.map(c=>c.email.toLowerCase()));
+  let added=0, skipped=0;
+  for(const row of _csvRows){
+    const name = row[nameCol]?.trim();
+    const email = row[emailCol]?.trim().toLowerCase();
+    if(!name||!email||!email.includes('@')){ skipped++; continue; }
+    if(existingEmails.has(email)){ skipped++; continue; }
+    existing.push({name,email});
+    existingEmails.add(email);
+    added++;
+  }
+  saveContacts(existing);
+  renderContacts();
+  updateSendPanel();
+  closeModal('csv-import');
+  _csvRows=[]; _csvHeaders=[];
+  document.getElementById('csv-map-section').style.display='none';
+  document.getElementById('csv-import-btn').style.display='none';
+  document.getElementById('csv-file-input').value='';
+  toast('Imported '+added+' contacts'+(skipped?' ('+skipped+' skipped)':'')+'!','success');
+}
+function showCSVErr(msg){
+  const el=document.getElementById('csv-import-err');
+  el.textContent=msg; el.style.display='block';
+}
+
+// ── EMAIL TEMPLATE DRAFT ──
+function getTmplDraft(){
+  return gs('mrs_tmpl_draft',{subject:'{{city}} Market Update — {{month}}',intro:'',signoff:'Always here to help — reach out anytime!'});
+}
+function saveTmplDraft(){
+  const d={
+    subject:document.getElementById('tmpl-subject')?.value||'',
+    intro:document.getElementById('tmpl-intro')?.value||'',
+    signoff:document.getElementById('tmpl-signoff')?.value||'',
+  };
+  ss('mrs_tmpl_draft',d);
+  updatePreview();
+}
+function loadTmplDraft(){
+  const d=getTmplDraft();
+  const s=document.getElementById('tmpl-subject');if(s)s.value=d.subject||'';
+  const i=document.getElementById('tmpl-intro');if(i)i.value=d.intro||'';
+  const sg=document.getElementById('tmpl-signoff');if(sg)sg.value=d.signoff||'';
+}
+
+// ── CAMPAIGN SCHEDULER ──
+let _campaignCadence = 'weekly';
+
+function setCadence(c){
+  _campaignCadence = c;
+  ['weekly','biweekly','monthly','bimonthly'].forEach(id=>{
+    const el=document.getElementById('cad-'+id);
+    if(el) el.classList.toggle('active', id===c);
+  });
+  updateNextSendLabel();
+}
+
+function getNextSendDate(cadence){
+  const now = new Date();
+  const d = new Date(now);
+  if(cadence==='weekly'){
+    // Next Monday
+    const day = d.getDay();
+    d.setDate(d.getDate() + (day===1?7:(8-day)%7));
+  } else if(cadence==='biweekly'){
+    d.setDate(d.getDate()+14);
+  } else if(cadence==='monthly'){
+    d.setMonth(d.getMonth()+1,1);
+  } else if(cadence==='bimonthly'){
+    d.setMonth(d.getMonth()+2,1);
+  }
+  return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+}
+
+function updateNextSendLabel(){
+  const el=document.getElementById('campaign-next-send');
+  const campaign=gs('mrs_campaign',null);
+  if(!el) return;
+  if(campaign&&campaign.active){
+    el.style.display='';
+    el.textContent='Next send: '+getNextSendDate(_campaignCadence);
+  } else {
+    el.style.display='none';
+  }
+}
+
+function loadCampaignState(){
+  const campaign=gs('mrs_campaign',null);
+  const badge=document.getElementById('campaign-status-badge');
+  const btn=document.getElementById('campaign-toggle-btn');
+  if(!badge||!btn) return;
+  if(campaign&&campaign.active){
+    badge.className='campaign-status active'; badge.textContent='Active';
+    btn.textContent='Pause Scheduled Sending';
+    btn.style.background='var(--sub)';
+    _campaignCadence=campaign.cadence||'weekly';
+    setCadence(_campaignCadence);
+    updateNextSendLabel();
+    document.getElementById('campaign-next-send').style.display='';
+  } else {
+    badge.className='campaign-status inactive'; badge.textContent='Inactive';
+    btn.textContent='Activate Scheduled Sending';
+    btn.style.background='';
+    document.getElementById('campaign-next-send').style.display='none';
+  }
+}
+
+async function toggleCampaign(){
+  const campaign=gs('mrs_campaign',null);
+  const contacts=getContacts();
+  const p=getProfile();
+  const tmpl=getTmplDraft();
+
+  if(campaign&&campaign.active){
+    // Pause
+    ss('mrs_campaign',{...campaign,active:false});
+    loadCampaignState();
+    toast('Scheduled campaign paused.','info');
+    // Notify server
+    await saveCampaignToServer(false);
+    return;
+  }
+
+  // Activate
+  if(!contacts.length){toast('Add contacts first!','error');return;}
+  if(!p.first){toast('Complete your profile first!','error');return;}
+  const cfg=gs('mrs_ejs',null);
+  if(!cfg){toast('Set up EmailJS in your Profile tab first!','error');return;}
+
+  const city=SEND_CITY||Object.keys(getCities())[0];
+  const newCampaign={
+    active:true, cadence:_campaignCadence, city, contacts,
+    profile:p, ejsCfg:cfg, template:tmpl,
+    activatedAt:new Date().toISOString(),
+    nextSend:getNextSendDate(_campaignCadence),
+    userId:CU?.email||'unknown',
+  };
+  ss('mrs_campaign',newCampaign);
+  loadCampaignState();
+  toast('Campaign activated! Reports will send '+_campaignCadence+'.','success');
+  await saveCampaignToServer(true, newCampaign);
+}
+
+async function saveCampaignToServer(active, campaign){
+  try {
+    await fetch('/api/save-campaign', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({active, campaign: campaign||null, userId: CU?.email||'unknown'}),
+    });
+  } catch(e){ console.log('Campaign server sync:', e.message); }
+}
+
 // -- SOCIAL SHARE --
 const SITE_URL = 'https://marketready-stats.netlify.app';
 
@@ -2060,6 +2341,33 @@ function copyShareUrl(){
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+
+  <!-- CSV IMPORT MODAL -->
+  <div class="modal-overlay" id="modal-csv-import" onclick="if(event.target===this)closeModal('csv-import')">
+    <div class="modal">
+      <div class="modal-title">Import Contacts from CSV</div>
+      <div class="modal-sub">Upload a spreadsheet with client names and emails</div>
+      <div class="csv-import-zone" id="csv-drop-zone" onclick="document.getElementById('csv-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleCSVDrop(event)">
+        <div class="csv-import-icon">📄</div>
+        <div class="csv-import-lbl">Click or drag a CSV file here</div>
+        <div class="csv-import-sub">Supports .csv files — must have Name and Email columns</div>
+      </div>
+      <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="handleCSVFile(this)"/>
+      <div id="csv-map-section" style="display:none">
+        <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:8px">Map your columns:</div>
+        <div class="csv-map-row"><label>Name col:</label><select id="csv-col-name"></select></div>
+        <div class="csv-map-row"><label>Email col:</label><select id="csv-col-email"></select></div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:8px" id="csv-preview-label"></div>
+        <div id="csv-preview-wrap" style="max-height:180px;overflow-y:auto"></div>
+      </div>
+      <div id="csv-import-err" style="font-size:11px;color:#dc2626;margin-bottom:8px;display:none"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn-ghost btn-full" onclick="closeModal('csv-import')">Cancel</button>
+        <button class="btn-gold btn-full" id="csv-import-btn" onclick="doCSVImport()" style="display:none">Import Contacts</button>
+      </div>
+    </div>
+  </div>
 
   <!-- SHARE SHEET -->
   <div class="share-sheet" id="share-sheet" onclick="if(event.target===this||event.target.classList.contains('share-backdrop'))closeShareSheet()">
