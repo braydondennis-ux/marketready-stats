@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>MarketReady Stats</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+:root{
+  --bg:#f5f4f1;--surface:#ffffff;--surface2:#f9f8f5;--surface3:#f0ede8;
+  --border:#e4e0d8;--border2:#ddd9cf;
+  --navy:#1B3A6B;--gold:#C9A84C;--gold-lt:#a07020;--gold-dim:rgba(201,168,76,0.1);
+  --teal:#2a9d97;--coral:#E05C3A;--green:#16a34a;--red:#dc2626;
+  --text:#0d1a2e;--text2:#374151;--sub:#6b7280;--sub2:#9ca3af;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,sans-serif;overflow:hidden}
+
+/* ── DESKTOP LAYOUT (10% side padding, full width, scrollable) ── */
+@media(min-width:700px){
+  html,body{height:auto;overflow:auto;background:var(--bg);}
+
+  /* Screens become normal page flow — no more absolute overlay */
+  .screen{position:relative;min-height:100vh;display:none;flex-direction:column;overflow:visible;}
+  .screen.active{display:flex;}
+
+  /* Login: centered card with 10% side padding */
+  #screen-login{
+    min-height:100vh;
+    padding:80px 10% 60px;
+    justify-content:flex-start;
+    align-items:center;
+  }
+  .login-card{max-width:460px;width:100%;}
+
+  /* App header: 10% horizontal padding on content */
+  .app-header-top{padding-left:10%;padding-right:10%;}
+  .app-header-dateline{padding-left:10%;padding-right:10%;}
+
+  /* App body: 10% side padding, normal scroll */
+  .app-body{
+    overflow:visible;
+    padding-left:10%;
+    padding-right:10%;
+    padding-bottom:100px;
+  }
+
+  /* Bottom nav: 10% side padding, centered labels */
+  .bottom-nav{padding-left:10%;padding-right:10%;justify-content:space-around;}
+
+  /* Admin header and body */
+  .admin-header{padding-left:10%;padding-right:10%;}
+  #screen-admin .app-body{padding-left:10%;padding-right:10%;}
+
+  /* Share sheet max-width stays centered */
+  .share-panel{max-width:600px;margin:0 auto;}
+
+  /* Modal overlay panel stays centered */
+  .modal{max-width:520px;}
+
+  /* Hero: full bleed background but text respects padding via body */
+  .report-hero{margin-left:-10%;margin-right:-10%;padding-left:calc(10% + 18px);padding-right:calc(10% + 18px);}
+
+  /* Full-bleed sections: extend past body padding */
+  .insights-section{margin-left:-10%;margin-right:-10%;padding-left:calc(10% + 14px);padding-right:calc(10% + 14px);}
+  .city-strip{margin-left:-10%;margin-right:-10%;padding-left:10%;padding-right:10%;}
+}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden}
+.screen.active{display:flex}
+
+/* LOGIN */
+#screen-login{background:linear-gradient(165deg,#dde6f0,#f5f4f1 55%);align-items:center;justify-content:flex-start;padding:max(40px,calc(50vh - 280px)) 20px 40px;overflow-y:auto}
+.login-card{width:100%;max-width:390px;background:#ffffff;border:1px solid rgba(201,168,76,.35);border-radius:20px;padding:36px 28px;box-shadow:0 8px 40px rgba(27,58,107,.12);}
+.login-logo{text-align:center;margin-bottom:30px}
+.login-logo-mark{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;background:var(--navy);border-radius:12px;margin-bottom:12px;border:1px solid rgba(201,168,76,.3);font-size:22px;color:#C9A84C}
+.login-wordmark{font-family:'Playfair Display',serif;font-size:24px;color:#0d1a2e}
+.login-wordmark span{color:var(--gold)}
+.login-sub{font-size:10px;color:var(--sub);letter-spacing:.18em;text-transform:uppercase;margin-top:4px}
+.form-label{font-size:10px;font-weight:600;color:var(--sub);letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:6px}
+.form-input{width:100%;background:#f9f8f5;border:1px solid var(--border2);border-radius:10px;padding:13px 14px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border .2s;margin-bottom:14px}
+.form-input:focus{border-color:rgba(201,168,76,.7);background:#fff}
+.form-input::placeholder{color:#9ca3af}
+.btn-primary{width:100%;background:linear-gradient(135deg,#c9a84c,#a87830);color:#04080f;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:.04em;text-transform:uppercase}
+.login-error{font-size:12px;color:#dc2626;text-align:center;margin-top:10px;display:none}
+.login-role-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.role-chip{background:#f5f4f1;border:1px solid var(--border2);border-radius:10px;padding:10px 8px;text-align:center;font-size:12px;font-weight:500;color:var(--sub);cursor:pointer;transition:all .2s}
+.role-chip.active{background:var(--gold-dim);border-color:rgba(201,168,76,.45);color:var(--gold-lt);font-weight:600}
+
+/* APP HEADER */
+#screen-app{background:var(--bg)}
+.app-header{flex-shrink:0;background:#1B3A6B;border-bottom:1px solid rgba(201,168,76,.2)}
+.app-header-top{display:flex;justify-content:space-between;align-items:center;padding:10px 16px 8px;border-bottom:1px solid rgba(255,255,255,.04)}
+.header-brand{font-family:'Playfair Display',serif;font-size:18px;display:flex;align-items:center;gap:7px;color:#ffffff}
+.hb-dot{width:7px;height:7px;background:var(--gold);border-radius:50%;flex-shrink:0}
+.header-brand span{color:var(--gold)}
+.header-right{display:flex;align-items:center;gap:8px}
+.user-pill{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 11px 4px 7px;font-size:11px;color:rgba(255,255,255,.9);display:flex;align-items:center;gap:6px}
+.user-av{width:20px;height:20px;border-radius:50%;background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.4);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff}
+.btn-out{background:transparent;border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:4px 9px;font-size:11px;color:rgba(255,255,255,.7);cursor:pointer;font-family:inherit;transition:all .2s}
+.btn-out:hover{border-color:var(--coral);color:var(--coral)}
+.app-header-dateline{padding:5px 16px 7px;display:flex;justify-content:space-between}
+.dl-left{font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(201,168,76,.8)}
+.dl-right{font-size:9px;color:rgba(255,255,255,.5)}
+
+/* NAV */
+.app-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:70px}
+.app-body::-webkit-scrollbar{width:2px}
+.app-body::-webkit-scrollbar-thumb{background:var(--border2)}
+.app-nav{position:fixed;bottom:0;left:0;right:0;height:62px;background:rgba(255,255,255,.97);backdrop-filter:blur(24px);border-top:1px solid #e4e0d8;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;color:#9ca3af;cursor:pointer;transition:color .2s;font-family:inherit;position:relative}
+.nav-btn.active{color:var(--gold)}
+.nav-btn.active::after{content:'';position:absolute;top:0;left:25%;right:25%;height:1.5px;background:var(--gold);border-radius:0 0 2px 2px}
+.nav-icon{font-size:18px;line-height:1}
+.nav-label{font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+
+/* PANELS */
+.panel{display:none}.panel.active{display:block}
+
+/* CITY STRIP */
+.city-strip{background:#ffffff;border-bottom:1px solid #e4e0d8;padding:10px 14px 0;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+.city-strip::-webkit-scrollbar{display:none}
+.city-tab{display:inline-block;background:transparent;border:none;border-bottom:2px solid transparent;padding:5px 12px 9px;font-size:12px;font-weight:500;color:#6b7280;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;white-space:nowrap}
+.city-tab.active{color:var(--gold-lt);border-bottom-color:var(--gold);font-weight:600}
+
+/* REPORT HERO */
+.report-hero{background:#1B3A6B;padding:18px 18px 14px;border-bottom:3px solid var(--gold);position:relative;overflow:hidden}
+.report-hero::after{content:'';position:absolute;bottom:3px;left:0;right:0;height:1px;background:rgba(201,168,76,.2)}
+.re-eyebrow{font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;display:flex;align-items:center;gap:6px;opacity:.85}
+.re-eyebrow::before{content:'';width:16px;height:1px;background:var(--gold)}
+.re-city{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:#ffffff;letter-spacing:-.02em;line-height:1.1;margin-bottom:1px}
+.re-date{font-size:10px;color:rgba(201,168,76,.75);letter-spacing:.08em}
+
+/* ─── 4-KPI ROW (matches email) ─── */
+.kpi-4-row{display:grid;grid-template-columns:1fr 1fr;background:#ffffff;border-radius:10px;margin:14px 14px 0;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.kpi4{padding:14px 12px;border-right:1px solid #e4e0d8;border-bottom:1px solid #e4e0d8;text-align:center}
+.kpi4:nth-child(2n){border-right:none}
+.kpi4:nth-child(n+3){border-bottom:none}
+.kpi4-lbl{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;margin-bottom:5px}
+.kpi4-val{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--navy);line-height:1;margin-bottom:4px}
+.kpi4-val{color:#4a7ab5}
+.kpi4-delta{font-size:10px;color:var(--sub)}
+.kpi4-delta.up{color:var(--green)}
+.kpi4-delta.down{color:var(--red)}
+
+/* MAI CITY CARD */
+.mai-section{padding:14px 14px 10px;background:#ffffff;border-radius:10px;margin:14px 14px 0;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.mai-section-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#1B3A6B;margin-bottom:4px}
+.mai-section-sub{font-size:10px;color:#6b7280;margin-bottom:12px;font-weight:500}
+.mai-card{background:#ffffff;border:2px solid #1B3A6B;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(27,58,107,.1)}
+.mai-card-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px 10px;border-bottom:2px solid #e4e0d8;background:#f0f4fa}
+.mai-city-name{font-size:14px;font-weight:700;color:#0d1a2e}
+.mai-badge{font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px}
+.mai-badge.seller{background:#dcfce7;color:#16a34a}
+.mai-badge.balanced{background:#fef9c3;color:#a16207}
+.mai-badge.buyer{background:#fee2e2;color:#dc2626}
+.mai-score-row{display:flex;align-items:center;gap:10px;padding:10px 14px}
+.mai-score-num{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;color:#0d1a2e;line-height:1;flex-shrink:0}
+.mai-bar-wrap{flex:1}
+.mai-bar-track{background:#e4e0d8;height:6px;border-radius:3px;overflow:hidden;margin-bottom:4px}
+.mai-bar-fill{height:100%;border-radius:3px}
+.mai-bar-fill.seller{background:var(--gold)}
+.mai-bar-fill.balanced{background:#ca8a04}
+.mai-bar-fill.buyer{background:#4a7ab5}
+.mai-trend{font-size:10px;color:#6b7280}
+.mai-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid #e4e0d8}
+.mai-stat{padding:10px 14px;border-right:1px solid #e8e4dc;border-bottom:1px solid #e8e4dc}
+.mai-stat:nth-child(2n){border-right:none}
+.mai-stat:nth-last-child(-n+2){border-bottom:none}
+.mai-stat-lbl{font-size:8px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#6b7280;margin-bottom:3px}
+.mai-stat-val{font-size:14px;font-weight:700;color:#0d1a2e}
+.mai-stat-val.up{color:var(--green)}
+.mai-stat-val.down{color:var(--red)}
+
+/* RATES SECTION */
+.rates-section{background:#f9f8f5;padding:18px 16px 20px;border-radius:14px;margin:14px;border:3px solid #1B3A6B;box-shadow:0 4px 18px rgba(27,58,107,.1)}
+.rates-title{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.rates-title::after{content:'';flex:1;height:1px;background:#e4e0d8}
+.rates-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1px;background:#e4e0d8;border-radius:10px;overflow:hidden}
+.rate-block{background:#f9f8f5;padding:11px 8px;text-align:center}
+.rate-lbl{font-size:8px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#6b7280;margin-bottom:5px}
+.rate-val{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#4a7ab5;line-height:1;margin-bottom:3px}
+.rate-val.highlight{color:#8c1c2d}
+.rate-chg{font-size:10px}
+.rate-chg.up{color:var(--red)}
+.rate-chg.down{color:var(--green)}
+
+/* INSIGHTS SECTION */
+.insights-section{background:var(--navy);padding:16px 14px;border-radius:10px;margin:14px 14px 0}
+.insights-title{font-family:'Playfair Display',serif;font-size:16px;color:#ffffff;margin-bottom:12px}
+.insights-title span{color:var(--gold)}
+.insight-row{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.insight-row:last-child{border-bottom:none;padding-bottom:0}
+.insight-dot{color:var(--gold);font-size:12px;flex-shrink:0;margin-top:1px}
+.insight-text{font-size:12px;color:rgba(255,255,255,.85);line-height:1.6}
+.insight-text strong{color:#fff}
+
+/* STATS FOOTER */
+.stats-footer{padding:9px 16px;display:flex;justify-content:space-between;align-items:center;background:#f9f8f5;margin:14px 14px 14px;border-radius:8px}
+.sf-text{font-size:10px;color:#9ca3af}
+.sf-badge{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:var(--gold-dim);border:1px solid rgba(201,168,76,.2);border-radius:20px;padding:2px 8px}
+
+/* CONTACTS */
+#panel-contacts{padding:0}
+.panel-header{background:#1B3A6B;padding:18px 16px 16px;border-bottom:1px solid rgba(201,168,76,.2)}
+.panel-headline{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#ffffff;margin-bottom:2px}
+.panel-tagline{font-size:11px;color:rgba(201,168,76,.8);letter-spacing:.04em}
+.contacts-toolbar{padding:12px 14px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #e4e0d8;background:#ffffff}
+.contact-search{flex:1;background:#f9f8f5;border:1px solid #ddd9cf;border-radius:8px;padding:9px 13px;color:#0d1a2e;font-size:13px;font-family:'Inter',sans-serif;outline:none}
+.contact-search:focus{border-color:rgba(201,168,76,.3)}
+.contact-search::placeholder{color:var(--sub2)}
+.contacts-meta{padding:8px 16px;font-size:10px;font-weight:600;color:#9ca3af;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #e4e0d8;background:#f9f8f5}
+.contact-list-wrap{background:#ffffff}
+.contact-row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid #f0ede8}
+.contact-row:last-child{border-bottom:none}
+.contact-av{width:38px;height:38px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#1B3A6B,#2a5298);border:1px solid rgba(201,168,76,.3);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:#C9A84C}
+.contact-info{flex:1;min-width:0}
+.contact-name{font-size:13px;font-weight:600;color:#0d1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+.contact-email{font-size:11px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.contact-del{background:none;border:none;color:var(--sub2);cursor:pointer;font-size:18px;padding:4px 6px;border-radius:6px;line-height:1}
+.contact-del:hover{color:var(--coral)}
+
+/* BTNS */
+.btn-gold{background:linear-gradient(135deg,#c9a84c,#a87830);color:#04080f;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;text-transform:uppercase;letter-spacing:.04em}
+.btn-gold:hover{opacity:.88}
+.btn-full{width:100%}
+.btn-ghost{background:transparent;border:1px solid var(--border2);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--sub);cursor:pointer;font-family:inherit;transition:all .2s}
+.btn-ghost:hover{border-color:var(--coral);color:var(--coral)}
+.btn-sm{padding:5px 10px;font-size:11px;border-radius:7px}
+
+/* SEND PANEL */
+#panel-send{padding:0}
+.send-header{background:#1B3A6B;padding:18px 16px 16px;border-bottom:1px solid rgba(201,168,76,.2)}
+.send-meta{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.send-meta-chip{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:4px 11px;font-size:10px;color:var(--sub)}
+.send-meta-chip strong{color:var(--gold-lt)}
+.send-body{padding:14px 14px 0}
+.sec-lbl{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sec-lbl::after{content:'';flex:1;height:1px;background:var(--border)}
+.send-city-strip{overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;margin-bottom:14px}
+.send-city-strip::-webkit-scrollbar{display:none}
+
+/* EMAIL PREVIEW — matches actual GAT newsletter */
+.ep-shell{border-radius:12px;overflow:hidden;border:1px solid rgba(0,0,0,.2);box-shadow:0 8px 32px rgba(0,0,0,.5);margin-bottom:14px;background:#f4f4f4}
+.ep-goldbar{height:4px;background:#C9A84C}
+.ep-header{background:#04080f;padding:14px 20px 8px}
+.ep-header-top{display:flex;justify-content:space-between;margin-bottom:6px}
+.ep-pub-name{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#C9A84C}
+.ep-issue{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.ep-header-divider{height:1px;background:rgba(201,168,76,.3);margin-bottom:8px}
+.ep-date-italic{font-family:Georgia,serif;font-size:11px;font-style:italic;color:#C9A84C;letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px}
+.ep-big-headline{font-family:Georgia,serif;font-size:32px;font-weight:300;color:#fff;line-height:1.1;letter-spacing:-.01em;margin-bottom:0}
+.ep-big-headline span{color:#C9A84C;font-weight:600}
+.ep-goldbar-bottom{height:2px;background:rgba(201,168,76,.3);margin-top:10px}
+.ep-body{background:#ffffff;padding:16px 20px 14px}
+.ep-snapshot-eyebrow{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:#6b7280;margin-bottom:3px}
+.ep-snapshot-title{font-family:Georgia,serif;font-size:15px;color:#04080f;margin-bottom:12px;padding-left:9px;border-left:3px solid #C9A84C}
+.ep-kpi4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;margin-bottom:14px}
+.ep-kpi{padding:12px 6px;text-align:center;border-right:1px solid #e5e7eb}
+.ep-kpi:last-child{border-right:none}
+.ep-kpi-lbl{font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;margin-bottom:4px}
+.ep-kpi-num{font-family:Georgia,serif;font-size:18px;font-weight:700;color:#1B3A6B;line-height:1;margin-bottom:3px}
+.ep-kpi-delta{font-size:9px;color:#6b7280}
+.ep-kpi-delta.up{color:#16a34a}
+.ep-kpi-delta.down{color:#dc2626}
+.ep-mai-lbl{font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;margin-bottom:8px}
+.ep-mai-card{border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;margin-bottom:12px}
+.ep-mai-top{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#f9fafb;border-bottom:1px solid #e5e7eb}
+.ep-mai-city{font-size:12px;font-weight:700;color:#04080f}
+.ep-mai-badge{font-size:8px;font-weight:700;padding:2px 7px;border-radius:20px}
+.ep-mai-badge.seller{background:#dcfce7;color:#16a34a}
+.ep-mai-badge.balanced{background:#fef9c3;color:#a16207}
+.ep-mai-badge.buyer{background:#fee2e2;color:#dc2626}
+.ep-mai-body{padding:10px 12px}
+.ep-mai-score-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ep-mai-score{font-family:Georgia,serif;font-size:28px;font-weight:700;color:#04080f;line-height:1}
+.ep-mai-bar-track{flex:1;background:#e5e7eb;height:5px;border-radius:3px;overflow:hidden}
+.ep-mai-bar-fill{height:100%;border-radius:3px}
+.ep-mai-trend{font-size:9px;color:#6b7280;margin-top:2px}
+.ep-mai-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;border-top:1px solid #e5e7eb;padding-top:8px;margin-top:6px}
+.ep-mai-stat-lbl{font-size:8px;color:#6b7280;margin-bottom:1px}
+.ep-mai-stat-val{font-size:11px;font-weight:700;color:#04080f}
+.ep-mai-stat-val.up{color:#16a34a}
+.ep-mai-stat-val.down{color:#dc2626}
+.ep-rates-lbl{font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;margin-bottom:8px}
+.ep-rates4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;margin-bottom:12px}
+.ep-rate-block{padding:10px 6px;text-align:center;border-right:1px solid #e5e7eb}
+.ep-rate-block:last-child{border-right:none}
+.ep-rate-lbl{font-size:7px;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin-bottom:3px}
+.ep-rate-val{font-family:Georgia,serif;font-size:16px;font-weight:700;color:#8c1c2d;line-height:1;margin-bottom:2px}
+.ep-rate-chg{font-size:9px;color:#dc2626}
+.ep-rate-chg.down{color:#16a34a}
+.ep-insights{background:#1B3A6B;border-radius:6px;padding:12px 14px;margin-bottom:12px}
+.ep-insights-title{font-family:Georgia,serif;font-size:14px;color:#fff;margin-bottom:10px}
+.ep-insights-title span{color:#C9A84C}
+.ep-insight{display:flex;gap:6px;margin-bottom:7px}
+.ep-insight:last-child{margin-bottom:0}
+.ep-insight-dot{color:#C9A84C;font-size:10px;flex-shrink:0;padding-top:1px}
+.ep-insight-txt{font-size:10px;color:rgba(255,255,255,.85);line-height:1.55}
+.ep-insight-txt strong{color:#fff}
+.ep-sig{background:#1B3A6B;padding:12px 20px}
+.ep-sig-name{font-family:Georgia,serif;font-size:14px;color:#fff;margin-bottom:1px}
+.ep-sig-title{font-size:10px;color:rgba(255,255,255,.6);margin-bottom:4px}
+.ep-sig-contact{font-size:9px;color:rgba(255,255,255,.4)}
+.ep-sig-co{font-size:9px;color:rgba(201,168,76,.8)}
+.send-btn{width:100%;border:none;border-radius:12px;padding:15px;font-size:13px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#c9a84c,#8a5a14);color:#04080f;font-family:'Playfair Display',serif;letter-spacing:.05em;text-transform:uppercase;transition:opacity .2s;margin-bottom:16px}
+.send-btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* PROFILE */
+#panel-profile{padding:0}
+.profile-body{padding:14px}
+.profile-card{background:#ffffff;border:1px solid #e4e0d8;border-radius:14px;padding:16px;margin-bottom:12px}
+.pc-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#6b7280;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.pc-title::after{content:'';flex:1;height:1px;background:#e4e0d8}
+.pf{margin-bottom:10px}
+.pf label{font-size:9px;font-weight:700;color:#6b7280;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:5px}
+.pf input{width:100%;background:#f9f8f5;border:1px solid #ddd9cf;border-radius:8px;padding:10px 12px;color:#0d1a2e;font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border .2s}
+.pf input:focus{border-color:rgba(201,168,76,.4)}
+.pf input::placeholder{color:var(--sub2)}
+.pf-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ejs-badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.08em;padding:2px 7px;border-radius:20px;text-transform:uppercase;margin-left:6px;background:rgba(224,92,58,.1);color:var(--coral);border:1px solid rgba(224,92,58,.25)}
+.ejs-badge.active{background:rgba(76,186,125,.1);color:#4cba7d;border-color:rgba(76,186,125,.25)}
+
+/* ADMIN */
+#screen-admin{background:radial-gradient(ellipse at 15% 8%,#160404,var(--bg) 50%)}
+.admin-header{flex-shrink:0;background:linear-gradient(160deg,#180606,#070910);border-bottom:1px solid rgba(192,57,43,.2);padding:13px 16px 11px;display:flex;justify-content:space-between;align-items:center}
+.admin-brand{font-family:'Playfair Display',serif;font-size:18px;color:var(--text)}
+.admin-brand span{color:#e74c3c}
+.admin-badge{font-size:9px;font-weight:700;letter-spacing:.1em;padding:3px 9px;border-radius:20px;background:rgba(192,57,43,.12);color:#e74c3c;border:1px solid rgba(192,57,43,.3);text-transform:uppercase}
+.admin-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 30px}
+.a-sec{font-size:9px;font-weight:700;color:#e74c3c;letter-spacing:.14em;text-transform:uppercase;margin:18px 0 9px;display:flex;align-items:center;gap:7px}
+.a-sec::after{content:'';flex:1;height:1px;background:rgba(192,57,43,.2)}
+.a-card{background:#ffffff;border:1px solid #e4e0d8;border-radius:14px;padding:16px;margin-bottom:10px}
+.a-sub{font-size:9px;font-weight:700;color:#9ca3af;letter-spacing:.1em;text-transform:uppercase;margin:12px 0 7px;padding-top:10px;border-top:1px solid #e4e0d8}
+.ai{width:100%;background:#f9f8f5;border:1px solid #ddd9cf;border-radius:8px;padding:10px 12px;color:#0d1a2e;font-size:13px;font-family:'Inter',sans-serif;outline:none;margin-bottom:8px}
+.ai:focus{border-color:rgba(192,57,43,.4)}
+.ai::placeholder{color:var(--sub2)}
+select.ai{cursor:pointer}
+.btn-admin{background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.3);border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;color:#e74c3c;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;text-transform:uppercase;letter-spacing:.04em}
+.btn-admin:hover{background:rgba(192,57,43,.22)}
+.btn-admin-full{width:100%}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:8px}
+.sf label{font-size:9px;font-weight:700;color:#6b7280;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:4px}
+.sf input,.sf select{width:100%;background:#f9f8f5;border:1px solid #ddd9cf;border-radius:7px;padding:9px 11px;color:#0d1a2e;font-size:12px;font-family:'Inter',sans-serif;outline:none}
+.sf input:focus,.sf select:focus{border-color:rgba(201,168,76,.4)}
+.insight-edit{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
+.insight-edit label{font-size:9px;font-weight:700;color:var(--sub);letter-spacing:.08em;text-transform:uppercase}
+.insight-edit .ie-row{display:flex;gap:6px;align-items:stretch}
+.insight-edit .ie-bold{flex:0 0 32%;background:#f9f8f5;border:1px solid #ddd9cf;border-radius:7px;padding:8px 10px;color:#0d1a2e;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;outline:none}
+.insight-edit .ie-body{flex:1;background:#f9f8f5;border:1px solid #ddd9cf;border-radius:7px;padding:8px 10px;color:#0d1a2e;font-size:12px;font-family:'Inter',sans-serif;outline:none}
+.sa-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.sa-row:last-child{border-bottom:none}
+.sa-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#2a0808,#1a0404);border:1px solid rgba(192,57,43,.3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#e74c3c}
+.sa-info{flex:1;min-width:0}
+.sa-name{font-size:13px;font-weight:500;color:#0d1a2e}
+.sa-email{font-size:11px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(6px)}
+.modal-overlay.open{display:flex}
+.modal{background:#ffffff;border:1px solid #e4e0d8;border-top:2px solid #C9A84C;border-radius:22px 22px 0 0;padding:22px 18px 36px;width:100%;max-width:480px;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:3px;background:#ddd9cf;border-radius:2px;margin:0 auto 20px}
+.modal-title{font-family:'Playfair Display',serif;font-size:20px;margin-bottom:16px;color:#0d1a2e}
+.modal-btns{display:flex;gap:8px;margin-top:6px}
+.btn-cancel{flex:1;background:#f9f8f5;color:#6b7280;border:1px solid #ddd9cf;border-radius:9px;padding:12px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(12px);background:#ffffff;border:1px solid #e4e0d8;border-radius:9px;padding:9px 18px;font-size:12px;font-weight:500;z-index:300;opacity:0;transition:all .3s;white-space:nowrap;box-shadow:0 4px 20px rgba(27,58,107,.15);pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{border-color:rgba(76,186,125,.4);color:#4cba7d}
+.toast.error{border-color:rgba(224,92,58,.4);color:var(--coral)}
+.toast.info{border-color:rgba(201,168,76,.35);color:var(--gold)}
+.empty-state{text-align:center;padding:28px 16px;color:#9ca3af}
+.empty-state-icon{font-size:32px;margin-bottom:10px;opacity:.3}
+.empty-state-text{font-size:12px;line-height:1.7}
+
+/* AZ CITY SEARCH */
+.az-search-section{padding:18px 16px 20px;margin:14px;background:#f9f8f5;border:3px solid #1B3A6B;border-radius:14px;box-shadow:0 4px 18px rgba(27,58,107,.1)}
+.az-search-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#1B3A6B;margin-bottom:4px}
+.az-search-sub{font-size:10px;color:#6b7280;margin-bottom:10px;font-weight:500}
+.az-search-row{display:flex;gap:8px}
+.az-search-input{flex:1;background:#ffffff;border:1px solid #ddd9cf;border-radius:8px;padding:9px 13px;color:#0d1a2e;font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border .2s}
+.az-search-input:focus{border-color:rgba(27,58,107,.4)}
+.az-search-input::placeholder{color:#9ca3af}
+.az-search-btn{background:#1B3A6B;color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap}
+.az-search-btn:hover{background:#2a5298}
+.az-results{margin-top:10px}
+.az-result-card{background:#ffffff;border:1px solid #e4e0d8;border-radius:8px;padding:12px 14px;margin-bottom:7px;display:flex;align-items:center;gap:12px}
+.az-result-icon{width:32px;height:32px;background:#1B3A6B;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;color:#C9A84C;font-weight:700;font-family:'Playfair Display',serif}
+.az-result-info{flex:1;min-width:0}
+.az-result-city{font-size:13px;font-weight:700;color:#0d1a2e}
+.az-result-detail{font-size:11px;color:#6b7280;margin-top:1px}
+.az-result-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.az-result-badge.seller{background:#dcfce7;color:#16a34a}
+.az-result-badge.balanced{background:#fef9c3;color:#a16207}
+.az-result-badge.buyer{background:#fee2e2;color:#dc2626}
+.az-no-results{text-align:center;padding:16px;color:#9ca3af;font-size:12px}
+
+/* ECONOMIC INDICATORS */
+.econ-section{background:#ffffff;padding:14px 14px 16px;border-radius:10px;margin:14px 14px 0;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.econ-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.econ-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#1B3A6B}
+.econ-refresh{background:none;border:1px solid #ddd9cf;border-radius:6px;padding:3px 9px;font-size:10px;color:#6b7280;cursor:pointer;font-family:'Inter',sans-serif}
+.econ-refresh:hover{border-color:#1B3A6B;color:#1B3A6B}
+.econ-sub{font-size:10px;color:#6b7280;margin-bottom:12px;font-weight:500}
+.econ-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.econ-card{background:#f9f8f5;border:1px solid #e4e0d8;border-radius:9px;padding:11px 12px;position:relative;overflow:hidden}
+.econ-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;border-radius:9px 0 0 9px}
+.econ-card.ec-blue::before{background:#1B3A6B}
+.econ-card.ec-gold::before{background:#C9A84C}
+.econ-card.ec-green::before{background:#16a34a}
+.econ-card.ec-red::before{background:#dc2626}
+.econ-card.ec-teal::before{background:#2a9d97}
+.econ-lbl{font-size:8px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#6b7280;margin-bottom:5px;padding-left:7px}
+.econ-val{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#0d1a2e;line-height:1;padding-left:7px;margin-bottom:3px}
+.econ-delta{font-size:10px;color:#6b7280;padding-left:7px}
+.econ-delta.up{color:#16a34a}
+.econ-delta.down{color:#dc2626}
+.econ-note{font-size:9px;color:#9ca3af;padding-left:7px;margin-top:2px}
+.econ-loading{text-align:center;padding:20px;color:#9ca3af;font-size:12px}
+.econ-timestamp{font-size:9px;color:#9ca3af;text-align:right;margin-top:8px}
+
+/* ── SHARE BUTTON & SHEET ── */
+.share-btn{position:absolute;top:14px;right:14px;background:rgba(201,168,76,.18);border:1px solid rgba(201,168,76,.4);color:var(--gold);font-size:11px;font-weight:700;letter-spacing:.08em;padding:5px 10px;border-radius:20px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s}
+.share-btn:hover{background:rgba(201,168,76,.3);border-color:var(--gold)}
+.share-sheet{position:fixed;inset:0;z-index:300;display:none;align-items:flex-end;justify-content:center}
+.share-sheet.open{display:flex}
+.share-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+.share-panel{position:relative;width:100%;max-width:480px;background:#fff;border-radius:22px 22px 0 0;padding:24px 20px 36px;animation:slideUp .25s ease;border-top:3px solid var(--gold)}
+.share-handle{width:36px;height:3px;background:#e4e0d8;border-radius:2px;margin:0 auto 20px}
+.share-panel-title{font-size:13px;font-weight:700;color:var(--navy);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.share-panel-sub{font-size:12px;color:var(--sub);margin-bottom:18px}
+.share-text-box{background:#f5f4f1;border:1px solid #e4e0d8;border-radius:8px;padding:12px;font-size:12px;line-height:1.6;color:var(--text2);margin-bottom:16px;max-height:120px;overflow-y:auto;white-space:pre-wrap}
+.share-platforms{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.share-plat{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px 6px;border-radius:12px;border:1px solid #e4e0d8;background:#fff;transition:all .15s}
+.share-plat:hover{background:#f0f4fa;border-color:var(--navy)}
+.share-plat-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.share-plat-lbl{font-size:10px;font-weight:600;color:var(--text2);letter-spacing:.04em}
+.share-plat.fb .share-plat-icon{background:#1877F2}
+.share-plat.tw .share-plat-icon{background:#000}
+.share-plat.li .share-plat-icon{background:#0A66C2}
+.share-plat.copy .share-plat-icon{background:var(--navy)}
+.share-copy-row{display:flex;gap:8px}
+.share-copy-input{flex:1;border:1px solid #e4e0d8;border-radius:8px;padding:9px 12px;font-size:12px;color:var(--text2);background:#f9f8f5}
+.share-copy-btn{background:var(--navy);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:600;cursor:pointer}
+.share-close{position:absolute;top:16px;right:18px;background:none;border:none;font-size:20px;color:var(--sub);cursor:pointer;line-height:1}
+
+
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen active">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-mark">↗</div>
+      <div class="login-wordmark">MarketReady <span>Stats</span></div>
+      <div class="login-sub">Arizona Market Intelligence</div>
+    </div>
+    <div class="login-role-row">
+      <div class="role-chip active" id="role-admin" onclick="setRole('admin',this)">🔴 Admin</div>
+      <div class="role-chip" id="role-user" onclick="setRole('user',this)">🏡 Rep / Agent</div>
+    </div>
+    <label class="form-label">Email</label>
+    <input class="form-input" id="li-email" type="email" placeholder="your@email.com" autocomplete="email"/>
+    <label class="form-label">Password</label>
+    <input class="form-input" id="li-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="btn-primary" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="li-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="screen-app" class="screen">
+  <div class="app-header">
+    <div class="app-header-top">
+      <div class="header-brand"><div class="hb-dot"></div>MarketReady <span>Stats</span></div>
+      <div class="header-right">
+        <div class="user-pill"><div class="user-av" id="app-av">?</div><span id="app-name">Agent</span></div>
+        <button class="btn-out" onclick="doLogout()">Out</button>
+      </div>
+    </div>
+    <div class="app-header-dateline">
+      <div class="dl-left">Arizona Real Estate · Weekly Report</div>
+      <div class="dl-right" id="header-date"></div>
+    </div>
+  </div>
+
+  <div class="app-body" id="app-body">
+
+    <!-- STATS -->
+    <div id="panel-stats" class="panel active">
+      <!-- AZ CITY SEARCH -->
+      <div class="city-strip" id="city-tabs"></div>
+
+      <div class="report-hero">
+        <div class="re-eyebrow">Market Report</div>
+        <div class="re-city" id="hero-city">Arizona</div>
+        <div class="re-date" id="hero-date"></div>
+        <button class="share-btn" onclick="openShareSheet()">↗ Share</button>
+      </div>
+
+      <!-- 4 KPI boxes -->
+      <div class="kpi-4-row" id="kpi-4-row">
+        <div class="kpi4"><div class="kpi4-lbl">Active Listings</div><div class="kpi4-val" id="k-active">—</div><div class="kpi4-delta" id="k-active-d"></div></div>
+        <div class="kpi4"><div class="kpi4-lbl">Median Sale Price</div><div class="kpi4-val" id="k-price">—</div><div class="kpi4-delta" id="k-price-d"></div></div>
+        <div class="kpi4"><div class="kpi4-lbl">Avg Days on Market</div><div class="kpi4-val" id="k-dom">—</div><div class="kpi4-delta" id="k-dom-d"></div></div>
+        <div class="kpi4"><div class="kpi4-lbl">Months of Supply</div><div class="kpi4-val" id="k-mos">—</div><div class="kpi4-delta" id="k-mos-d"></div></div>
+      </div>
+
+
+      <!-- Search Arizona Cities -->
+      <div class="az-search-section">
+        <div class="az-search-title">Search Arizona Cities</div>
+        <div class="az-search-sub">Search any AZ city — click a result to update the Market Indicator</div>
+        <div class="az-search-row">
+          <input class="az-search-input" id="az-search-input" placeholder="e.g. Tempe, Queen Creek, 85251…" oninput="doAZSearchWithStore()" onkeydown="if(event.key==='Enter')doAZSearchWithStore()"/>
+          <button class="az-search-btn" onclick="doAZSearchWithStore()">Search</button>
+        </div>
+        <div class="az-results" id="az-results"></div>
+      </div>
+
+      <!-- MAI Card -->
+      <div class="mai-section">
+        <div class="mai-section-title">Market Indicator</div>
+        <div class="mai-section-sub">Above 30 = Seller's Market · At 30 = Balanced · Below 30 = Buyer's Market</div>
+        <div class="mai-card" id="mai-card"></div>
+      </div>
+
+      <!-- Rates -->
+      <div class="rates-section">
+        <div class="rates-title">Mortgage Rates</div>
+        <div class="rates-grid">
+          <div class="rate-block"><div class="rate-lbl">30-Yr Fixed</div><div class="rate-val highlight" id="r-30">—</div><div class="rate-chg" id="r-30-c"></div></div>
+          <div class="rate-block"><div class="rate-lbl">15-Yr Fixed</div><div class="rate-val" id="r-15">—</div><div class="rate-chg" id="r-15-c"></div></div>
+          <div class="rate-block"><div class="rate-lbl">5/1 ARM</div><div class="rate-val" id="r-arm">—</div><div class="rate-chg" id="r-arm-c"></div></div>
+          <div class="rate-block"><div class="rate-lbl">Jumbo 30-Yr</div><div class="rate-val" id="r-jmb">—</div><div class="rate-chg" id="r-jmb-c"></div></div>
+        </div>
+      </div>
+
+      <!-- Insights -->
+
+      <!-- ECONOMIC INDICATORS -->
+      <div class="econ-section" id="econ-section">
+        <div class="econ-header">
+          <div class="econ-title">Live Economic Indicators</div>
+          <button class="econ-refresh" onclick="fetchEconData()">↻ Refresh</button>
+        </div>
+        <div class="econ-sub">Federal Reserve benchmarks — updated by admin or live fetch</div>
+        <div class="econ-grid" id="econ-grid">
+          
+        </div>
+        <div class="econ-timestamp" id="econ-timestamp"></div>
+      </div>
+
+      <div class="insights-section" id="insights-section">
+        <div class="insights-title">💡 Key Market <span>Insights</span></div>
+        <div id="insights-list"></div>
+      </div>
+
+      <div class="stats-footer">
+        <div class="sf-text">ARMLS STAT · Data by MarketReady Admin</div>
+        <div class="sf-badge">AZ 2026</div>
+      </div>
+    </div>
+
+    <!-- CONTACTS -->
+    <div id="panel-contacts" class="panel">
+      <div class="panel-header">
+        <div class="panel-headline">Client List</div>
+        <div class="panel-tagline">Contacts who receive your market reports</div>
+      </div>
+      <div class="contacts-toolbar">
+        <input class="contact-search" id="contact-search" placeholder="Search clients…" oninput="renderContacts()"/>
+        <button class="btn-gold" onclick="openModal('add-contact')">+ Add</button>
+      </div>
+      <div class="contacts-meta" id="contact-count">0 Contacts</div>
+      <div class="contact-list-wrap"><div id="contact-list"></div></div>
+    </div>
+
+    <!-- SEND -->
+    <div id="panel-send" class="panel">
+      <div class="send-header">
+        <div class="panel-headline">Send Report</div>
+        <div class="panel-tagline">Email the weekly stats to all your clients</div>
+        <div class="send-meta">
+          <div class="send-meta-chip">To: <strong id="send-count">0</strong> contacts</div>
+          <div class="send-meta-chip">From: <strong id="send-from">Your Name</strong></div>
+        </div>
+      </div>
+      <div class="send-body">
+        <div class="sec-lbl" style="margin-top:4px">Select Market</div>
+        <div class="send-city-strip"><div id="send-city-tabs"></div></div>
+        <div class="sec-lbl">Email Preview</div>
+        <div id="email-preview"></div>
+        <button class="send-btn" id="send-btn" onclick="sendReport()">Send Report to All Contacts</button>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="panel-profile" class="panel">
+      <div class="panel-header">
+        <div class="panel-headline">Your Profile</div>
+        <div class="panel-tagline">Displayed in every report you send</div>
+      </div>
+      <div class="profile-body">
+        <div class="profile-card">
+          <div class="pc-title">Agent Info</div>
+          <div class="pf-row">
+            <div class="pf"><label>First Name</label><input id="pf-first" placeholder="First" oninput="updatePreview()"/></div>
+            <div class="pf"><label>Last Name</label><input id="pf-last" placeholder="Last" oninput="updatePreview()"/></div>
+          </div>
+          <div class="pf"><label>Title</label><input id="pf-title" placeholder="Real Estate Advisor" oninput="updatePreview()"/></div>
+          <div class="pf"><label>Company</label><input id="pf-company" placeholder="Great American Title Agency" oninput="updatePreview()"/></div>
+          <div class="pf-row">
+            <div class="pf"><label>Phone</label><input id="pf-phone" type="tel" placeholder="480-000-0000"/></div>
+            <div class="pf"><label>Email</label><input id="pf-email" type="email" placeholder="you@email.com"/></div>
+          </div>
+          <button class="btn-gold btn-full" onclick="saveProfile()">Save Profile</button>
+        </div>
+        <div class="profile-card">
+          <div class="pc-title">Email Sending <span class="ejs-badge" id="ejs-badge">Not Set Up</span></div>
+          <div id="ejs-form-wrap">
+            <div style="font-size:11px;color:var(--sub);line-height:1.7;margin-bottom:12px">Connect <a href="https://emailjs.com" target="_blank" style="color:var(--teal)">EmailJS</a> (free, 200/month) to send reports automatically.</div>
+            <div class="pf"><label>Public Key</label><input id="ejs-pub" placeholder="user_xxxx…" style="font-family:monospace;font-size:12px"/></div>
+            <div class="pf"><label>Service ID</label><input id="ejs-svc" placeholder="service_xxxx…" style="font-family:monospace;font-size:12px"/></div>
+            <div class="pf" style="margin-bottom:10px"><label>Template ID</label><input id="ejs-tmpl" placeholder="template_xxxx…" style="font-family:monospace;font-size:12px"/></div>
+            <button class="btn-gold btn-full" onclick="saveEJS()">Activate Email Sending</button>
+          </div>
+          <div id="ejs-active-wrap" style="display:none">
+            <div style="font-size:12px;color:#4cba7d;margin-bottom:10px">✅ EmailJS active</div>
+            <div style="font-size:11px;color:var(--sub);margin-bottom:10px">Service: <span id="ejs-svc-lbl" style="font-family:monospace;color:var(--teal);font-size:10px"></span></div>
+            <button class="btn-ghost" style="width:100%" onclick="resetEJS()">Reconfigure</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="app-nav">
+    <button class="nav-btn active" onclick="showTab('stats',this)"><span class="nav-icon">📊</span><span class="nav-label">Stats</span></button>
+    <button class="nav-btn" onclick="showTab('contacts',this)"><span class="nav-icon">👥</span><span class="nav-label">Clients</span></button>
+    <button class="nav-btn" onclick="showTab('send',this)"><span class="nav-icon">📤</span><span class="nav-label">Send</span></button>
+    <button class="nav-btn" onclick="showTab('profile',this)"><span class="nav-icon">⚙️</span><span class="nav-label">Profile</span></button>
+  </nav>
+</div>
+
+<!-- ADMIN -->
+<div id="screen-admin" class="screen">
+  <div class="admin-header">
+    <div class="admin-brand">MarketReady <span>Admin</span></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="admin-badge">Super Admin</div>
+      <button class="btn-out" onclick="doLogout()">Out</button>
+    </div>
+  </div>
+  <div class="admin-body">
+
+    <div class="a-sec">City / Market Stats</div>
+    <div class="a-card">
+      <div style="font-size:12px;font-weight:600;margin-bottom:10px;color:var(--text2)">Select Market to Update</div>
+      <select id="admin-city-sel" class="ai" onchange="loadCityAdmin()">
+        <option value="">— select a market —</option>
+      </select>
+      <div id="admin-city-fields" style="display:none">
+        <!-- KPI row stats -->
+        <div class="a-sub" style="padding-top:0;border-top:none;margin-top:0">ARMLS Snapshot (4 KPI boxes)</div>
+        <div class="g2">
+          <div class="sf"><label>Active Listings</label><input id="ac-active" placeholder="24,358"/></div>
+          <div class="sf"><label>Active Listings YoY</label><input id="ac-active-d" placeholder="↑ 5% YoY"/></div>
+          <div class="sf"><label>Median Sale Price</label><input id="ac-price" placeholder="$444K"/></div>
+          <div class="sf"><label>Price YoY Note</label><input id="ac-price-d" placeholder="Stable YoY"/></div>
+          <div class="sf"><label>Avg Days on Market</label><input id="ac-dom" placeholder="94"/></div>
+          <div class="sf"><label>Median DOM Note</label><input id="ac-dom-d" placeholder="71 median DOM"/></div>
+          <div class="sf"><label>Months of Supply</label><input id="ac-mos" placeholder="5.17"/></div>
+          <div class="sf"><label>Market Type</label><input id="ac-mos-d" placeholder="Balanced Market"/></div>
+        </div>
+        <!-- MAI Card -->
+        <div class="a-sub">Market Indicator Card</div>
+        <div class="g2">
+          <div class="sf"><label>MAI Score (1–60)</label><input id="ac-mai" placeholder="42" type="number" min="1" max="60"/></div>
+          <div class="sf"><label>Market Type</label>
+            <select id="ac-mtype"><option value="seller">Seller's Market</option><option value="balanced">Balanced Market</option><option value="buyer">Buyer's Market</option></select>
+          </div>
+        </div>
+        <div class="sf" style="margin-bottom:8px"><label>MAI Trend Note</label><input id="ac-mtrend" placeholder="↑ +3 pts · Strong luxury demand"/></div>
+        <div class="g2">
+          <div class="sf"><label>Median Price</label><input id="ac-mprice" placeholder="$1,000,000"/></div>
+          <div class="sf"><label>Days on Market</label><input id="ac-mdom" placeholder="~60 days"/></div>
+          <div class="sf"><label>Active Listings</label><input id="ac-mactive" placeholder="3,200"/></div>
+          <div class="sf"><label>YoY Change</label><input id="ac-myoy" placeholder="+15% YoY"/></div>
+        </div>
+        <button class="btn-gold btn-full" style="margin-top:4px" onclick="saveCityAdmin()">💾 Save City Stats</button>
+      </div>
+
+      <!-- AI REFRESH -->
+      <div class="a-sec">AI Market Refresh</div>
+      <div class="a-card">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">Uses Claude AI to generate fresh market estimates for all 20 Maricopa County cities based on the current date and market conditions. Requires <strong>ANTHROPIC_API_KEY</strong> set in Netlify environment variables.</div>
+        <button class="btn-gold btn-full" id="ai-refresh-btn" onclick="runAIRefresh()">✨ Refresh All Cities with AI</button>
+        <div id="ai-refresh-status" style="font-size:12px;color:var(--sub);margin-top:8px;text-align:center"></div>
+      </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);margin-bottom:8px">Add New City / ZIP</div>
+        <div style="display:flex;gap:8px">
+          <input class="ai" id="new-city-name" placeholder="City name or ZIP code" style="margin-bottom:0;flex:1"/>
+          <button class="btn-admin" onclick="addCity()">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-sec">Mortgage Rates</div>
+    <div class="a-card">
+      <div class="g4">
+        <div class="sf"><label>30-Yr Fixed</label><input id="ar-30" placeholder="6.65%"/></div>
+        <div class="sf"><label>30-Yr Change</label><input id="ar-30c" placeholder="↑ +0.12"/></div>
+        <div class="sf"><label>15-Yr Fixed</label><input id="ar-15" placeholder="5.89%"/></div>
+        <div class="sf"><label>15-Yr Change</label><input id="ar-15c" placeholder="↑ +0.08"/></div>
+        <div class="sf"><label>5/1 ARM</label><input id="ar-arm" placeholder="6.12%"/></div>
+        <div class="sf"><label>ARM Change</label><input id="ar-armc" placeholder="↓ -0.05"/></div>
+        <div class="sf"><label>Jumbo 30-Yr</label><input id="ar-jmb" placeholder="6.78%"/></div>
+        <div class="sf"><label>Jumbo Change</label><input id="ar-jmbc" placeholder="↑ +0.15"/></div>
+      </div>
+      <button class="btn-gold btn-full" onclick="saveRates()">💾 Save Rates</button>
+    </div>
+
+    <div class="a-sec">Key Market Insights</div>
+    <div class="a-card">
+      <div style="font-size:11px;color:var(--sub);margin-bottom:12px;line-height:1.6">Up to 5 bullet points shown in the stats panel and email.</div>
+      <div id="insights-editor"></div>
+      <button class="btn-gold btn-full" style="margin-top:4px" onclick="saveInsights()">💾 Save Insights</button>
+    </div>
+
+    <div class="a-sec">Sub-Admins / Reps / Agents</div>
+    <div class="a-card">
+      <div style="font-size:12px;font-weight:600;margin-bottom:12px;color:var(--text2)">Add New User</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <input class="ai" id="na-first" placeholder="First Name" style="margin-bottom:0"/>
+        <input class="ai" id="na-last" placeholder="Last Name" style="margin-bottom:0"/>
+      </div>
+      <div style="height:8px"></div>
+      <input class="ai" id="na-email" type="email" placeholder="Email address"/>
+      <input class="ai" id="na-pass" type="password" placeholder="Password (min 6 chars)"/>
+      <div id="na-err" style="font-size:12px;color:var(--coral);margin-bottom:8px;display:none;line-height:1.5"></div>
+      <button class="btn-admin btn-admin-full" onclick="addSubAdmin()">+ Add User</button>
+    </div>
+
+    <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);margin:12px 0 8px">All Users</div>
+    <div class="a-card" style="padding:0 16px"><div id="admin-user-list"><div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-text">No users yet</div></div></div></div>
+
+    <div class="a-sec">Economic Indicators</div>
+    <div class="a-card">
+      <div style="font-size:12px;font-weight:600;margin-bottom:10px;color:#374151">Update benchmark values shown on the stats panel</div>
+      <div class="g2">
+        <div class="sf"><label>AZ Unemployment</label><input id="ec-unemp-val" placeholder="4.2%"/></div>
+        <div class="sf"><label>Change vs Prior</label><input id="ec-unemp-d" placeholder="▲ +0.1% vs prior"/></div>
+        <div class="sf"><label>Fed Funds Rate</label><input id="ec-fed-val" placeholder="4.33%"/></div>
+        <div class="sf"><label>Change vs Prior</label><input id="ec-fed-d" placeholder="→ Unchanged"/></div>
+        <div class="sf"><label>10-Yr Treasury</label><input id="ec-tsy-val" placeholder="4.25%"/></div>
+        <div class="sf"><label>Change vs Prior</label><input id="ec-tsy-d" placeholder="▲ +0.12% vs prior"/></div>
+        <div class="sf"><label>30-Yr Mortgage</label><input id="ec-mort-val" placeholder="6.65%"/></div>
+        <div class="sf"><label>Change vs Prior</label><input id="ec-mort-d" placeholder="▲ +0.12% vs prior"/></div>
+        <div class="sf"><label>AZ Building Permits</label><input id="ec-perm-val" placeholder="4,187"/></div>
+        <div class="sf"><label>Change vs Prior</label><input id="ec-perm-d" placeholder="▼ -3.2% vs prior"/></div>
+        <div class="sf"><label>US Home Price Index</label><input id="ec-hpi-val" placeholder="322.4"/></div>
+        <div class="sf"><label>Change vs Prior</label><input id="ec-hpi-d" placeholder="▲ +0.4% vs prior"/></div>
+      </div>
+      <button class="btn-gold btn-full" onclick="saveEconAdmin()">💾 Save Economic Indicators</button>
+    </div>
+
+    <div class="a-sec">Welcome Email</div>
+    <div class="a-card">
+      <div style="font-size:11px;color:var(--sub);line-height:1.7;margin-bottom:12px">Every new user automatically gets a welcome email with login details.</div>
+      <div id="admin-ejs-form">
+        <input class="ai" id="admin-ejs-pub" placeholder="EmailJS Public Key"/>
+        <input class="ai" id="admin-ejs-svc" placeholder="Service ID (service_xxxx)"/>
+        <input class="ai" id="admin-ejs-tmpl" placeholder="Template ID (template_xxxx)" style="margin-bottom:10px"/>
+        <button class="btn-admin btn-admin-full" onclick="saveAdminEJS()">Activate EmailJS</button>
+      </div>
+      <div id="admin-ejs-active" style="display:none">
+        <div style="font-size:12px;color:#4cba7d;margin-bottom:10px">✅ Welcome emails active</div>
+        <button class="btn-ghost" onclick="resetAdminEJS()">Reconfigure</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-add-contact" onclick="if(event.target===this)closeModal('add-contact')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add a Client</div>
+    <div class="pf"><label>Full Name</label><input id="mc-name" placeholder="Jane Smith"/></div>
+    <div class="pf" style="margin-bottom:6px"><label>Email Address</label><input id="mc-email" type="email" placeholder="jane@email.com" onkeydown="if(event.key==='Enter')addContact()"/></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('add-contact')">Cancel</button>
+      <button class="btn-gold" style="flex:1;border-radius:9px;padding:12px;border:none;font-size:13px;cursor:pointer" onclick="addContact()">Add Client</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let CU=null,CU_ROLE=null,ACTIVE_CITY=null,SEND_CITY=null;
+const SA={email:'braydondennis'+'@'+'gmail.com',pass:'Jane8095$'};
+const gs=(k,d=null)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}};
+const ss=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+const getUsers=()=>gs('mrs_users',{});
+const saveUsers=u=>ss('mrs_users',u);
+const getCities=()=>gs('mrs_cities2',defaultCities());
+const saveCities=c=>ss('mrs_cities2',c);
+const getRates=()=>gs('mrs_rates',defaultRates());
+const saveRatesStore=r=>ss('mrs_rates',r);
+const getInsights=(city)=>{const c=getCities()[city];return c?.insights||[];}
+const saveInsightsForCity=(city,ins)=>{const cities=getCities();if(cities[city]){cities[city].insights=ins;saveCities(cities);}};
+
+function defaultCities(){
+  return {
+    'Maricopa County':{
+      active:'24,358',activeD:'\u2191 5% YoY',price:'$444,000',priceD:'Stable YoY',
+      dom:'48',domD:'Avg across county',mos:'3.5',mosD:'Near balanced',
+      mai:'32',mtype:'balanced',mtrend:'\u2192 Flat \u00b7 Inventory at 5-yr highs',
+      mprice:'$444,000',mdom:'48 days',mactive:'24,358',myoy:'+5% YoY',
+      insights:[
+        {h:'Market Stabilizing',b:'Greater Phoenix median sale price holding at $444K stable for 6+ months.'},
+        {h:'Supply Rising',b:'Over 24,000 active listings county-wide - most inventory available since 2017.'},
+        {h:'Luxury Surging',b:'Sales over $10M up 81% vs same period last year - high-end demand is robust.'},
+        {h:'Rates Holding',b:'30-yr mortgage rates near 6.65% - buyers acting now may lock in before further movement.'},
+        {h:'Spring Outlook',b:'New listings down 7% in late winter - could tighten supply as demand picks up in Q2.'},
+      ],
+    },
+    'Phoenix':{
+      active:'3,820',activeD:'\u2191 8% YoY',price:'$411,000',priceD:'Stable YoY',
+      dom:'52',domD:'Slightly slower pace',mos:'3.8',mosD:'Near balanced',
+      mai:'29',mtype:'balanced',mtrend:'\u2192 Flat \u00b7 Soft demand in entry-level',
+      mprice:'$411,000',mdom:'~52 days',mactive:'3,820',myoy:'+3% YoY',
+      insights:[
+        {h:'Largest Market',b:'Phoenix leads the county with 3,800+ active listings - more options for buyers than any other city.'},
+        {h:'Entry-Level Soft',b:'Homes under $350K seeing slower absorption - buyers in this range have negotiating power.'},
+        {h:'Midtown Rising',b:'Infill and midtown corridors attracting buyers priced out of Scottsdale and Gilbert.'},
+        {h:'Inventory Growth',b:'Active listings up 8% YoY - trend favoring buyers in most Phoenix submarkets.'},
+        {h:'New Development',b:'Light rail corridor and downtown expansion driving renewed interest in urban Phoenix.'},
+      ],
+    },
+    'Mesa':{
+      active:'2,644',activeD:'\u2191 6% YoY',price:'$442,000',priceD:'Stable YoY',
+      dom:'45',domD:'Near county average',mos:'3.2',mosD:'Slight seller edge',
+      mai:'33',mtype:'balanced',mtrend:'\u2192 Stable \u00b7 Steady absorption',
+      mprice:'$442,000',mdom:'~45 days',mactive:'2,644',myoy:'+4% YoY',
+      insights:[
+        {h:'Steady Performer',b:'Mesa consistently near county median with balanced supply and demand across price ranges.'},
+        {h:'East Mesa Growing',b:'85212 and neighboring ZIPs seeing new construction and strong family demand.'},
+        {h:'Value Play',b:'Comparable homes in Mesa run 10-15% below Chandler and Gilbert - attracting value-focused buyers.'},
+        {h:'Employment Base',b:'Boeing, Banner Health, and ASU Polytechnic anchor strong local employment supporting housing demand.'},
+        {h:'Absorption Steady',b:'Months of supply at 3.2 - sufficient inventory without giving buyers an outsized edge.'},
+      ],
+    },
+    'Scottsdale':{
+      active:'3,200',activeD:'\u2191 15% YoY',price:'$1,000,000',priceD:'\u2191 8% YoY',
+      dom:'55',domD:'Luxury tier slower',mos:'2.8',mosD:"Seller's advantage",
+      mai:'42',mtype:'seller',mtrend:'\u2191 +3 pts \u00b7 Luxury demand strong',
+      mprice:'$1,000,000',mdom:'~55 days',mactive:'3,200',myoy:'+8% YoY',
+      insights:[
+        {h:'Luxury Leader',b:'Scottsdale leads the metro with MAI 42 - firmly a seller market driven by high-net-worth demand.'},
+        {h:'Price Milestone',b:'Median sale price crossed $1M - driven by luxury condos, golf communities, and North Scottsdale estates.'},
+        {h:'Low Supply',b:'Only 2.8 months of supply - well below the 4-6 months considered balanced for a market this size.'},
+        {h:'International Buyers',b:'Continued interest from California and international buyers keeping premium neighborhoods competitive.'},
+        {h:'Spring Acceleration',b:"Scottsdale's high season typically peaks March-May - expect further tightening in coming weeks."},
+      ],
+    },
+    'Chandler':{
+      active:'1,410',activeD:'\u2193 7% YoY',price:'$525,000',priceD:'\u2191 2% YoY',
+      dom:'40',domD:'Faster than avg',mos:'2.9',mosD:"Slight seller edge",
+      mai:'35',mtype:'seller',mtrend:'\u2191 +2 pts \u00b7 Tech corridor demand',
+      mprice:'$525,000',mdom:'~40 days',mactive:'1,410',myoy:'+2% YoY',
+      insights:[
+        {h:'Tech Magnet',b:'Intel and TSMC fab investments continue drawing relocation buyers to Chandler - sustaining premium pricing.'},
+        {h:'Seller Conditions',b:'MAI at 35 - sellers hold an advantage with homes moving faster than the county average.'},
+        {h:'Price Resilience',b:'Despite broader market softening, Chandler prices up 2% YoY - employment base provides a floor.'},
+        {h:'Inventory Tightening',b:'Active listings down 7% YoY - supply constraints keeping absorption rates elevated.'},
+        {h:'Southeast Growth',b:'New commercial and residential development in southeast Chandler expanding buyer options.'},
+      ],
+    },
+    'Gilbert':{
+      active:'1,810',activeD:'\u2191 4% YoY',price:'$585,000',priceD:'\u2191 4% YoY',
+      dom:'32',domD:'Among fastest in county',mos:'2.1',mosD:"Strong seller market",
+      mai:'39',mtype:'seller',mtrend:'\u2191 +2 pts \u00b7 School demand driving sales',
+      mprice:'$585,000',mdom:'~32 days',mactive:'1,810',myoy:'+4% YoY',
+      insights:[
+        {h:'Top School Districts',b:"Gilbert consistently ranked among Arizona's best school districts - premium demand from families."},
+        {h:'Fastest Absorption',b:'Only 32 avg days on market - homes moving faster than any other major city in the county.'},
+        {h:'Tight Supply',b:'Just 2.1 months of supply - buyers face real competition and most well-priced homes see multiple offers.'},
+        {h:'Steady Appreciation',b:'4% YoY price growth reflects disciplined market - strong organic demand without speculation.'},
+        {h:'Master-Planned Growth',b:'Cooley Station and Power Ranch expansions bringing new inventory but demand absorbs it quickly.'},
+      ],
+    },
+    'Glendale':{
+      active:'2,140',activeD:'\u2191 12% YoY',price:'$388,000',priceD:'\u2193 2% YoY',
+      dom:'58',domD:'Slower absorption',mos:'4.3',mosD:'Buyer opportunity',
+      mai:'25',mtype:'buyer',mtrend:'\u2193 -2 pts \u00b7 Rising inventory',
+      mprice:'$388,000',mdom:'~58 days',mactive:'2,140',myoy:'-2% YoY',
+      insights:[
+        {h:'Buyer Advantage',b:"Glendale's MAI of 25 clearly favors buyers - more inventory, longer DOM, and price reductions available."},
+        {h:'Affordable Entry',b:'At $388K median, Glendale offers the most affordable homeownership in the core metro area.'},
+        {h:'Inventory Rising',b:'Active listings up 12% YoY - buyers have strong selection across most price points and neighborhoods.'},
+        {h:'Price Flexibility',b:'Sellers reducing prices to compete - avg price per sq ft among lowest in Maricopa County.'},
+        {h:'Sports Anchor',b:'State Farm Stadium and Desert Diamond Arena continue to anchor economic development in the area.'},
+      ],
+    },
+    'Peoria':{
+      active:'1,320',activeD:'\u2191 3% YoY',price:'$458,000',priceD:'\u2191 3% YoY',
+      dom:'40',domD:'Near county average',mos:'3.0',mosD:'Near balanced',
+      mai:'34',mtype:'balanced',mtrend:'\u2192 Stable \u00b7 Lake Pleasant driving NW demand',
+      mprice:'$458,000',mdom:'~40 days',mactive:'1,320',myoy:'+3% YoY',
+      insights:[
+        {h:'Balanced Market',b:'Peoria sits right at the balanced threshold - a fair market for both buyers and sellers.'},
+        {h:'Lake Pleasant Premium',b:'North Peoria near Lake Pleasant commands price premiums and attracts outdoor lifestyle buyers.'},
+        {h:'Family Focused',b:'Strong school ratings and family-friendly communities drive consistent demand in Peoria suburbs.'},
+        {h:'Steady Appreciation',b:'3% YoY price growth - healthy and sustainable, attractive to long-term investors and owner-occupants.'},
+        {h:'Vistancia Strength',b:'The Vistancia master-planned community continues to be one of the most in-demand addresses in Northwest Valley.'},
+      ],
+    },
+    'Tempe':{
+      active:'1,243',activeD:'\u2191 2% YoY',price:'$485,000',priceD:'\u2191 4% YoY',
+      dom:'35',domD:'Fast-moving market',mos:'2.6',mosD:"Seller's market",
+      mai:'37',mtype:'seller',mtrend:'\u2191 +2 pts \u00b7 ASU and urban demand',
+      mprice:'$485,000',mdom:'~35 days',mactive:'1,243',myoy:'+4% YoY',
+      insights:[
+        {h:'Urban Core Demand',b:"Tempe's walkability and proximity to ASU create sustained demand that outperforms suburban markets."},
+        {h:'Tight Inventory',b:'Only 2.6 months of supply - buyers competing for limited urban single-family and condo product.'},
+        {h:'Rental Strength',b:'Strong rental demand from ASU and tech workers supports investor returns alongside owner-occupant sales.'},
+        {h:'Price Appreciation',b:'Median up 4% YoY to $485K - urban premium pricing reflects lifestyle and location demand.'},
+        {h:'Light Rail Access',b:'Valley Metro expansion increasing Tempe appeal to car-optional buyers and urban professionals.'},
+      ],
+    },
+    'Surprise':{
+      active:'1,580',activeD:'\u2191 5% YoY',price:'$422,000',priceD:'\u2191 2% YoY',
+      dom:'44',domD:'Near county average',mos:'3.4',mosD:'Near balanced',
+      mai:'31',mtype:'balanced',mtrend:'\u2192 Stable \u00b7 Active adult demand steady',
+      mprice:'$422,000',mdom:'~44 days',mactive:'1,580',myoy:'+2% YoY',
+      insights:[
+        {h:'Active Adult Hub',b:'Sun City Grand and Marley Park attract strong retiree and 55+ buyer demand year-round.'},
+        {h:'Balanced Conditions',b:'MAI at 31 - market is in equilibrium with fair conditions for buyers and sellers alike.'},
+        {h:'Value Opportunity',b:'Affordable compared to East Valley - attracting first-time buyers from Glendale and Phoenix.'},
+        {h:'Northwest Growth',b:'Ongoing infrastructure investment and commercial development strengthening Surprise long-term appeal.'},
+        {h:'Spring Training',b:'Cactus League proximity adds seasonal economic boost and drives short-term rental demand each spring.'},
+      ],
+    },
+    'Goodyear':{
+      active:'915',activeD:'\u2191 3% YoY',price:'$475,000',priceD:'\u2191 5% YoY',
+      dom:'30',domD:'Fast-moving',mos:'2.2',mosD:"Strong seller's market",
+      mai:'40',mtype:'seller',mtrend:'\u2191 +3 pts \u00b7 Top-ranked growth city',
+      mprice:'$475,000',mdom:'~30 days',mactive:'915',myoy:'+5% YoY',
+      insights:[
+        {h:'Top-Ranked City',b:'Goodyear consistently ranked one of the best cities to live in the US - demand reflects that reputation.'},
+        {h:'Strong Seller Market',b:'MAI of 40 - sellers hold clear advantage with homes moving in just ~30 days on average.'},
+        {h:'Price Growth',b:'5% YoY appreciation to $475K - among the strongest in the West Valley for this price range.'},
+        {h:'Employment Magnet',b:'Amazon, REI, and Lockheed Martin anchoring strong employment base - driving relocation demand.'},
+        {h:'Tight Supply',b:'Just 2.2 months of supply - well-priced homes frequently attract multiple offers in this market.'},
+      ],
+    },
+    'Avondale':{
+      active:'785',activeD:'\u2191 4% YoY',price:'$412,000',priceD:'\u2191 2% YoY',
+      dom:'46',domD:'Near county average',mos:'3.5',mosD:'Near balanced',
+      mai:'31',mtype:'balanced',mtrend:'\u2192 Stable \u00b7 Affordable West Valley',
+      mprice:'$412,000',mdom:'~46 days',mactive:'785',myoy:'+2% YoY',
+      insights:[
+        {h:'Affordable Entry Point',b:'Avondale offers one of the lowest median prices in the core metro at $412K - strong first-time buyer appeal.'},
+        {h:'Balanced Market',b:'MAI at 31 - fair conditions for both parties with no significant advantage to either side.'},
+        {h:'Growing Infrastructure',b:'Loop 101 and Interstate 10 access makes Avondale increasingly appealing for commuters across the valley.'},
+        {h:'Job Growth',b:'Distribution and logistics sector expansion in West Valley adding employment and housing demand.'},
+        {h:'Steady Appreciation',b:'2% YoY growth - modest but consistent, reflecting stable demand without speculative pressure.'},
+      ],
+    },
+    'Buckeye':{
+      active:'1,825',activeD:'\u2191 10% YoY',price:'$385,000',priceD:'\u2191 1% YoY',
+      dom:'50',domD:'Slightly above avg',mos:'3.8',mosD:'Near balanced',
+      mai:'29',mtype:'balanced',mtrend:'\u2192 Slight softening \u00b7 More options for buyers',
+      mprice:'$385,000',mdom:'~50 days',mactive:'1,825',myoy:'+1% YoY',
+      insights:[
+        {h:'Fastest Growing City',b:'Buckeye has been one of the fastest-growing cities in the US - new communities expanding supply.'},
+        {h:'Affordability Leader',b:'At $385K median, Buckeye is the most affordable incorporated city with significant new construction.'},
+        {h:'Buyer Opportunity',b:'Rising inventory and moderate DOM give buyers strong selection and negotiating room.'},
+        {h:'New Construction Dominant',b:'Majority of active listings are new builds - buyers benefit from builder incentives and warranty coverage.'},
+        {h:'Long-Term Growth',b:'Westgate expansion and future employment growth expected to drive long-term price appreciation.'},
+      ],
+    },
+    'Queen Creek':{
+      active:'895',activeD:'\u2191 3% YoY',price:'$598,000',priceD:'\u2191 6% YoY',
+      dom:'28',domD:'Among fastest in county',mos:'2.0',mosD:"Strong seller's market",
+      mai:'41',mtype:'seller',mtrend:'\u2191 +3 pts \u00b7 Premium suburb demand',
+      mprice:'$598,000',mdom:'~28 days',mactive:'895',myoy:'+6% YoY',
+      insights:[
+        {h:'Hottest Southeast Market',b:"Queen Creek's MAI of 41 places it among the most competitive markets in Maricopa County."},
+        {h:'Fastest Absorption',b:'Just 28 avg days on market - well-priced homes regularly receive offers within days of listing.'},
+        {h:'Premium Pricing',b:'6% YoY appreciation to $598K reflects growing prestige of Queen Creek as a destination suburb.'},
+        {h:'Master-Planned Appeal',b:'Meridian and Harvest communities offer resort-style amenities attracting premium buyers.'},
+        {h:'Tight Supply',b:'Only 2 months of supply - the tightest inventory ratio of any large city in the Southeast Valley.'},
+      ],
+    },
+    'Fountain Hills':{
+      active:'312',activeD:'\u2193 2% YoY',price:'$785,000',priceD:'\u2191 4% YoY',
+      dom:'48',domD:'Luxury pace expected',mos:'2.7',mosD:"Seller's market",
+      mai:'37',mtype:'seller',mtrend:'\u2191 +1 pt \u00b7 Mountain view premium holding',
+      mprice:'$785,000',mdom:'~48 days',mactive:'312',myoy:'+4% YoY',
+      insights:[
+        {h:'Mountain View Premium',b:'Fountain Hills commands a landscape premium - buyers pay for McDowell mountain views and desert luxury.'},
+        {h:'Tight Inventory',b:'Only 312 active listings - a very limited supply market where desirable homes move quickly.'},
+        {h:'Steady Luxury Demand',b:'4% YoY appreciation at $785K median - consistent demand from affluent buyers seeking value near Scottsdale.'},
+        {h:'Lifestyle Community',b:'World-famous fountain, golf courses, and outdoor recreation drive retiree and semi-retired buyer demand.'},
+        {h:'Seller Advantage',b:'MAI 37 with 2.7 months of supply - sellers can expect competitive offers on well-maintained properties.'},
+      ],
+    },
+    'Paradise Valley':{
+      active:'222',activeD:'\u2191 5% YoY',price:'$3,200,000',priceD:'\u2191 10% YoY',
+      dom:'75',domD:'Luxury timeline normal',mos:'3.2',mosD:"Balanced luxury market",
+      mai:'38',mtype:'seller',mtrend:'\u2191 +2 pts \u00b7 Ultra-luxury segment active',
+      mprice:'$3,200,000',mdom:'~75 days',mactive:'222',myoy:'+10% YoY',
+      insights:[
+        {h:'Ultra-Luxury Leader',b:'Paradise Valley holds the highest median sale price in the entire Phoenix metro at $3.2M.'},
+        {h:'Double-Digit Appreciation',b:'10% YoY price growth - ultra-luxury segment outperforming the broader market significantly.'},
+        {h:'Limited Supply',b:'Only 222 active listings - PV is constrained by its own incorporated boundaries preventing sprawl.'},
+        {h:'Executive Market',b:'Continued demand from high-net-worth individuals and executives sustaining premium pricing.'},
+        {h:'No Commercial Zoning',b:"PV's strict residential-only zoning ensures exclusivity and protects long-term property values."},
+      ],
+    },
+    'Cave Creek':{
+      active:'188',activeD:'\u2191 2% YoY',price:'$895,000',priceD:'\u2191 5% YoY',
+      dom:'50',domD:'Luxury-rural pace',mos:'3.0',mosD:"Seller's market",
+      mai:'36',mtype:'seller',mtrend:'\u2191 +1 pt \u00b7 Rural luxury holding strong',
+      mprice:'$895,000',mdom:'~50 days',mactive:'188',myoy:'+5% YoY',
+      insights:[
+        {h:'Desert Lifestyle Premium',b:'Cave Creek attracts buyers seeking large lots, horse properties, and authentic Sonoran Desert living.'},
+        {h:'Tight Inventory',b:'Only 188 active listings - small town with limited developable land keeps supply constrained.'},
+        {h:'Strong Appreciation',b:'5% YoY to $895K - equestrian and rural luxury properties outperforming the broader market.'},
+        {h:'Scottsdale Adjacency',b:'Proximity to North Scottsdale amenities while maintaining rural character commands a lifestyle premium.'},
+        {h:'Acreage Market',b:'Demand strongest for 1+ acre parcels - buyers seeking space and privacy in the desert foothills.'},
+      ],
+    },
+    'Litchfield Park':{
+      active:'198',activeD:'\u2193 3% YoY',price:'$612,000',priceD:'\u2191 3% YoY',
+      dom:'27',domD:'Very fast absorption',mos:'1.9',mosD:"Strong seller's market",
+      mai:'42',mtype:'seller',mtrend:'\u2191 +2 pts \u00b7 Highest demand in West Valley',
+      mprice:'$612,000',mdom:'~27 days',mactive:'198',myoy:'+3% YoY',
+      insights:[
+        {h:'West Valley Gem',b:"Litchfield Park's MAI of 42 makes it the most competitive market in the West Valley by a wide margin."},
+        {h:'Fastest Moving',b:'Average 27 days on market - homes listed here sell faster than almost anywhere in Maricopa County.'},
+        {h:'Historic Character',b:'The Wigwam Resort community and mature tree-lined streets create irreplaceable character driving premium pricing.'},
+        {h:'Extremely Limited Supply',b:'Only 198 active listings in a small geographic footprint - inventory scarcity is the defining market factor.'},
+        {h:'Buyer Competition',b:'Multiple offer situations common - buyers should be pre-approved and ready to move decisively.'},
+      ],
+    },
+    'Ahwatukee':{
+      active:'482',activeD:'\u2191 3% YoY',price:'$528,000',priceD:'\u2191 4% YoY',
+      dom:'35',domD:'Fast for price range',mos:'2.6',mosD:"Seller's market",
+      mai:'37',mtype:'seller',mtrend:'\u2191 +1 pt \u00b7 Foothills demand steady',
+      mprice:'$528,000',mdom:'~35 days',mactive:'482',myoy:'+4% YoY',
+      insights:[
+        {h:'Foothills Lifestyle',b:'South Mountain and Ahwatukee Foothills offer desert hiking access that commands strong buyer premiums.'},
+        {h:'Competitive Market',b:'MAI 37 with just 2.6 months of supply - sellers hold a clear advantage across most price points.'},
+        {h:'South Phoenix Alternative',b:'Buyers priced out of Chandler and Gilbert finding similar quality at more accessible prices in Ahwatukee.'},
+        {h:'Stable Appreciation',b:'4% YoY growth to $528K - consistent demand from families near I-10 employment corridor.'},
+        {h:'Limited Land',b:'Surrounded by preserve land - very limited new construction keeps resale values protected long-term.'},
+      ],
+    },
+    'El Mirage':{
+      active:'425',activeD:'\u2191 14% YoY',price:'$325,000',priceD:'\u2193 2% YoY',
+      dom:'60',domD:'Slower pace',mos:'4.6',mosD:'Buyer opportunity',
+      mai:'23',mtype:'buyer',mtrend:'\u2193 -3 pts \u00b7 Rising inventory',
+      mprice:'$325,000',mdom:'~60 days',mactive:'425',myoy:'-2% YoY',
+      insights:[
+        {h:'Best Value in County',b:'El Mirage offers the lowest median price in Maricopa County at $325K - maximum purchasing power for buyers.'},
+        {h:'Buyer Market',b:'MAI of 23 clearly favors buyers - more inventory, longer days on market, and price reductions common.'},
+        {h:'Price Corrections',b:'Median down 2% YoY - buyers can negotiate from a position of strength in this market.'},
+        {h:'Rising Inventory',b:'Active listings up 14% YoY - excellent selection for buyers across all bedroom counts.'},
+        {h:'Long-Term Opportunity',b:'Infrastructure improvements and proximity to Loop 101 may drive future appreciation from affordable base.'},
+      ],
+    },
+  };
+}
+
+function defaultRates(){return{r30:'6.65%',r30c:'↑ +0.12',r15:'5.89%',r15c:'↑ +0.08',arm:'6.12%',armc:'↓ -0.05',jmb:'6.78%',jmbc:'↑ +0.15'};}
+function defaultInsights(){return[
+  {h:'Market Stabilizing',b:'Greater Phoenix median sale price holding at $444K — stable for 6+ months.'},
+  {h:'Supply Rising',b:'24,358 active listings with 5.17 months of supply — most inventory since 2017.'},
+  {h:'Luxury Surging',b:'26 sales over $10M already in 2026 — 81% of all of 2025\'s full-year count.'},
+  {h:'Rates Ticking Up',b:'Mortgage rates rose to 6.65% — buyers acting now may lock in before further movement.'},
+  {h:'New Listings Slowing',b:'New listings down 7% in Feb/March — could tighten supply heading into spring.'},
+];}
+
+/* LOGIN */
+function setRole(r,el){document.querySelectorAll('.role-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');}
+function doLogin(){
+  const email=document.getElementById('li-email').value.trim().toLowerCase();
+  const pass=document.getElementById('li-pass').value;
+  document.getElementById('li-err').style.display='none';
+  if(!email||!pass){showErr('Please enter your email and password.');return;}
+  if(email===SA.email&&pass===SA.pass){loginAdmin();return;}
+  const users=getUsers();
+  if(users[email]&&users[email].pass===pass){loginUser(users[email]);return;}
+  showErr('Invalid email or password.');
+}
+function showErr(m){const e=document.getElementById('li-err');e.textContent=m;e.style.display='block';}
+function loginAdmin(){ss('mrs_session',{role:'admin'});show('screen-admin');loadAdmin();}
+function loginUser(u){CU=u;ss('mrs_session',{role:'user',email:u.email});show('screen-app');loadApp();}
+function doLogout(){CU=null;ss('mrs_session',null);['screen-app','screen-admin'].forEach(s=>hide(s));show('screen-login');document.getElementById('li-email').value='';document.getElementById('li-pass').value='';}
+function show(id){document.getElementById(id).classList.add('active');}
+function hide(id){document.getElementById(id).classList.remove('active');}
+
+/* APP */
+function loadApp(){
+  const p=CU.profile||{};
+  const init=((p.first||CU.first||'?')[0]+(p.last||CU.last||'')[0]||'').toUpperCase();
+  document.getElementById('app-av').textContent=init||'?';
+  document.getElementById('app-name').textContent=p.first||CU.first||'Agent';
+  const hd=document.getElementById('header-date');
+  if(hd) hd.textContent=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  ['first','last','title','company','phone','email'].forEach(k=>{const el=document.getElementById('pf-'+k);if(el)el.value=(p[k]||CU[k]||'');});
+  renderCityTabs();renderSendCityTabs();renderContacts();updatePreview();loadEJSStatus();
+  renderEconCards();
+  showTab('stats',document.querySelector('.nav-btn'));
+}
+function showTab(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name)?.classList.add('active');
+  if(btn)btn.classList.add('active');
+  document.getElementById('app-body').scrollTop=0;
+  if(name==='send')updateSendPanel();
+  if(name==='stats')renderEconCards();
+}
+
+/* CITY TABS */
+function renderCityTabs(){
+  const cities=getCities(),names=Object.keys(cities);
+  if(!ACTIVE_CITY||!cities[ACTIVE_CITY]) ACTIVE_CITY=names[0]||null;
+  document.getElementById('city-tabs').innerHTML=names.map(c=>`<div class="city-tab${c===ACTIVE_CITY?' active':''}" onclick="selectCity('${c}')">${c}</div>`).join('');
+  renderStats();
+}
+function selectCity(city){ACTIVE_CITY=city;document.querySelectorAll('#city-tabs .city-tab').forEach(t=>t.classList.toggle('active',t.textContent===city));const is=document.getElementById('insights-section');if(is)is.style.display='';renderStats();}
+
+function renderStats(){
+  const s=getCities()[ACTIVE_CITY];
+  const rates=getRates();
+  const insights=getInsights(ACTIVE_CITY);
+  document.getElementById('hero-city').textContent=ACTIVE_CITY||'—';
+  document.getElementById('hero-date').textContent=new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  if(!s)return;
+  // KPI 4 row
+  const setStat=(vi,v,di,d)=>{const ve=document.getElementById(vi);if(ve)ve.textContent=v||'—';const de=document.getElementById(di);if(de){de.textContent=d||'';de.className='kpi4-delta'+(d&&d.includes('↑')?'up':d&&d.includes('↓')?' down':'');}};
+  setStat('k-active',s.active,'k-active-d',s.activeD);
+  setStat('k-price',s.price,'k-price-d',s.priceD);
+  setStat('k-dom',s.dom,'k-dom-d',s.domD);
+  setStat('k-mos',s.mos,'k-mos-d',s.mosD);
+  // MAI card
+  const mt=s.mtype||'balanced';
+  const mPct=Math.min(100,Math.round((parseInt(s.mai)||30)/60*100));
+  const badgeLabel=mt==='seller'?"Seller's Market":mt==='buyer'?"Buyer's Market":"Balanced Market";
+  document.getElementById('mai-card').innerHTML=`
+    <div class="mai-card-head">
+      <div class="mai-city-name">${ACTIVE_CITY}</div>
+      <div class="mai-badge ${mt}">${badgeLabel}</div>
+    </div>
+    <div class="mai-score-row">
+      <div class="mai-score-num">${s.mai||'—'}</div>
+      <div class="mai-bar-wrap">
+        <div class="mai-bar-track"><div class="mai-bar-fill ${mt}" style="width:${mPct}%"></div></div>
+        <div class="mai-trend">${s.mtrend||''}</div>
+      </div>
+    </div>
+    <div class="mai-stats-grid">
+      <div class="mai-stat"><div class="mai-stat-lbl">Median Price</div><div class="mai-stat-val">${s.mprice||'—'}</div></div>
+      <div class="mai-stat"><div class="mai-stat-lbl">Days on Market</div><div class="mai-stat-val">${s.mdom||'—'}</div></div>
+      <div class="mai-stat"><div class="mai-stat-lbl">Active Listings</div><div class="mai-stat-val">${s.mactive||'—'}</div></div>
+      <div class="mai-stat"><div class="mai-stat-lbl">YoY Change</div><div class="mai-stat-val ${s.myoy&&s.myoy.includes('-')?'down':'up'}">${s.myoy||'—'}</div></div>
+    </div>`;
+  // Rates
+  const setRate=(vi,v,ci,c)=>{const ve=document.getElementById(vi);if(ve)ve.textContent=v||'—';const ce=document.getElementById(ci);if(ce){ce.textContent=c||'';ce.className='rate-chg'+(c&&c.includes('↓')?' down':' up');}};
+  setRate('r-30',rates.r30,'r-30-c',rates.r30c);
+  setRate('r-15',rates.r15,'r-15-c',rates.r15c);
+  setRate('r-arm',rates.arm,'r-arm-c',rates.armc);
+  setRate('r-jmb',rates.jmb,'r-jmb-c',rates.jmbc);
+  // Insights
+  const il=document.getElementById('insights-list');
+  if(il) il.innerHTML=insights.map(i=>`<div class="insight-row"><div class="insight-dot">●</div><div class="insight-text"><strong>${i.h}:</strong> ${i.b}</div></div>`).join('');
+}
+
+/* SEND CITY TABS */
+function renderSendCityTabs(){
+  const cities=getCities(),names=Object.keys(cities);
+  if(!SEND_CITY||!cities[SEND_CITY]) SEND_CITY=names[0]||null;
+  document.getElementById('send-city-tabs').innerHTML=names.map(c=>`<div class="city-tab${c===SEND_CITY?' active':''}" onclick="selectSendCity('${c}')">${c}</div>`).join('');
+  updatePreview();
+}
+function selectSendCity(city){SEND_CITY=city;document.querySelectorAll('#send-city-tabs .city-tab').forEach(t=>t.classList.toggle('active',t.textContent===city));updatePreview();}
+
+/* CONTACTS */
+function getContacts(){if(!CU)return[];return getUsers()[CU.email]?.contacts||[];}
+function saveContacts(c){const users=getUsers();if(users[CU.email]){users[CU.email].contacts=c;saveUsers(users);CU.contacts=c;}}
+function renderContacts(){
+  const q=(document.getElementById('contact-search')?.value||'').toLowerCase();
+  const contacts=getContacts();
+  const filtered=contacts.filter(c=>c.name.toLowerCase().includes(q)||c.email.toLowerCase().includes(q));
+  document.getElementById('contact-count').textContent=`${contacts.length} Contact${contacts.length!==1?'s':''}`;
+  const el=document.getElementById('contact-list');
+  if(!contacts.length){el.innerHTML='<div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-text">No clients yet.<br>Add contacts to send reports.</div></div>';return;}
+  el.innerHTML=filtered.map(c=>`
+    <div class="contact-row">
+      <div class="contact-av">${(c.name[0]||'?').toUpperCase()}</div>
+      <div class="contact-info"><div class="contact-name">${c.name}</div><div class="contact-email">${c.email}</div></div>
+      <button class="contact-del" onclick="deleteContact('${c.email}')">×</button>
+    </div>`).join('');
+}
+function addContact(){
+  const name=document.getElementById('mc-name').value.trim(),email=document.getElementById('mc-email').value.trim().toLowerCase();
+  if(!name||!email||!email.includes('@')){toast('Enter a valid name and email.','error');return;}
+  const contacts=getContacts();
+  if(contacts.find(c=>c.email===email)){toast('Contact already exists.','error');return;}
+  contacts.push({name,email});saveContacts(contacts);closeModal('add-contact');renderContacts();updateSendPanel();
+  toast('✅ '+name+' added!','success');
+}
+function deleteContact(email){saveContacts(getContacts().filter(c=>c.email!==email));renderContacts();updateSendPanel();toast('Contact removed.','info');}
+
+/* EMAIL PREVIEW */
+function getProfile(){return CU?.profile||{first:CU?.first||'',last:CU?.last||'',title:'',company:'',phone:'',email:CU?.email||''};}
+
+function buildPreview(city,s,rates,insights,profile){
+  const name=`${profile.first||''} ${profile.last||''}`.trim()||'Your Name';
+  const mo=new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const mt=s?.mtype||'balanced';
+  const badgeLabel=mt==='seller'?"Seller's Market":mt==='buyer'?"Buyer's Market":"Balanced Market";
+  const mPct=Math.min(100,Math.round((parseInt(s?.mai)||30)/60*100));
+  const barColor=mt==='seller'?'#C9A84C':mt==='buyer'?'#4a7ab5':'#ca8a04';
+  return `<div class="ep-shell">
+    <div class="ep-goldbar"></div>
+    <div class="ep-header">
+      <div class="ep-header-top"><div class="ep-pub-name">The Weekly GAT · MarketReady Stats</div><div class="ep-issue">ARMLS STAT · ${mo}</div></div>
+      <div class="ep-header-divider"></div>
+      <div class="ep-date-italic">${mo}</div>
+      <div class="ep-big-headline">Arizona<br><span>Real Estate</span><br>Weekly</div>
+      <div class="ep-goldbar-bottom"></div>
+    </div>
+    <div class="ep-body">
+      <div class="ep-snapshot-eyebrow">📈 MARKET UPDATE</div>
+      <div class="ep-snapshot-title">Greater Phoenix / ARMLS Snapshot — ${mo}</div>
+      <div class="ep-kpi4">
+        <div class="ep-kpi"><div class="ep-kpi-lbl">Active Listings</div><div class="ep-kpi-num">${s?.active||'—'}</div><div class="ep-kpi-delta ${s?.activeD&&s.activeD.includes('↑')?'up':'down'}">${s?.activeD||''}</div></div>
+        <div class="ep-kpi"><div class="ep-kpi-lbl">Median Sale Price</div><div class="ep-kpi-num">${s?.price||'—'}</div><div class="ep-kpi-delta">${s?.priceD||''}</div></div>
+        <div class="ep-kpi"><div class="ep-kpi-lbl">Avg Days on Market</div><div class="ep-kpi-num">${s?.dom||'—'}</div><div class="ep-kpi-delta">${s?.domD||''}</div></div>
+        <div class="ep-kpi"><div class="ep-kpi-lbl">Months of Supply</div><div class="ep-kpi-num">${s?.mos||'—'}</div><div class="ep-kpi-delta">${s?.mosD||''}</div></div>
+      </div>
+      <div class="ep-mai-lbl">MARKET INDICATOR — ${city.toUpperCase()}</div>
+      <div class="ep-mai-card">
+        <div class="ep-mai-top"><div class="ep-mai-city">${city}</div><div class="ep-mai-badge ${mt}">${badgeLabel}</div></div>
+        <div class="ep-mai-body">
+          <div class="ep-mai-score-row">
+            <div class="ep-mai-score">${s?.mai||'—'}</div>
+            <div style="flex:1"><div class="ep-mai-bar-track"><div class="ep-mai-bar-fill" style="width:${mPct}%;background:${barColor}"></div></div><div class="ep-mai-trend">${s?.mtrend||''}</div></div>
+          </div>
+          <div class="ep-mai-stats">
+            <div><div class="ep-mai-stat-lbl">Median Price</div><div class="ep-mai-stat-val">${s?.mprice||'—'}</div></div>
+            <div><div class="ep-mai-stat-lbl">Days on Market</div><div class="ep-mai-stat-val">${s?.mdom||'—'}</div></div>
+            <div><div class="ep-mai-stat-lbl">Active Listings</div><div class="ep-mai-stat-val">${s?.mactive||'—'}</div></div>
+            <div><div class="ep-mai-stat-lbl">YoY Change</div><div class="ep-mai-stat-val ${s?.myoy&&s.myoy.includes('-')?'down':'up'}">${s?.myoy||'—'}</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="ep-rates-lbl">CURRENT MORTGAGE RATES</div>
+      <div class="ep-rates4">
+        <div class="ep-rate-block"><div class="ep-rate-lbl">30-Yr Fixed</div><div class="ep-rate-val">${rates?.r30||'—'}</div><div class="ep-rate-chg ${rates?.r30c&&rates.r30c.includes('↓')?'down':''}">${rates?.r30c||''}</div></div>
+        <div class="ep-rate-block"><div class="ep-rate-lbl">15-Yr Fixed</div><div class="ep-rate-val" style="color:#1B3A6B">${rates?.r15||'—'}</div><div class="ep-rate-chg ${rates?.r15c&&rates.r15c.includes('↓')?'down':''}">${rates?.r15c||''}</div></div>
+        <div class="ep-rate-block"><div class="ep-rate-lbl">5/1 ARM</div><div class="ep-rate-val" style="color:#1B3A6B">${rates?.arm||'—'}</div><div class="ep-rate-chg ${rates?.armc&&rates.armc.includes('↓')?'down':''}">${rates?.armc||''}</div></div>
+        <div class="ep-rate-block"><div class="ep-rate-lbl">Jumbo 30-Yr</div><div class="ep-rate-val" style="color:#1B3A6B">${rates?.jmb||'—'}</div><div class="ep-rate-chg ${rates?.jmbc&&rates.jmbc.includes('↓')?'down':''}">${rates?.jmbc||''}</div></div>
+      </div>
+      ${insights&&insights.length?`<div class="ep-insights"><div class="ep-insights-title">💡 Key Market <span>Insights</span></div>${insights.map(i=>`<div class="ep-insight"><div class="ep-insight-dot">●</div><div class="ep-insight-txt"><strong>${i.h}:</strong> ${i.b}</div></div>`).join('')}</div>`:''}
+    </div>
+    <div class="ep-sig">
+      <div class="ep-sig-name">${name}</div>
+      ${profile.title?`<div class="ep-sig-title">${profile.title}</div>`:''}
+      ${profile.company?`<div class="ep-sig-co">${profile.company}</div>`:''}
+      <div class="ep-sig-contact">${[profile.phone,profile.email].filter(Boolean).join(' · ')}</div>
+    </div>
+  </div>`;
+}
+
+function updatePreview(){
+  const cities=getCities(),city=SEND_CITY||Object.keys(cities)[0];
+  const el=document.getElementById('email-preview');
+  if(el) el.innerHTML=buildPreview(city||'Arizona',cities[city],getRates(),getInsights(),getProfile());
+}
+function updateSendPanel(){
+  const contacts=getContacts();
+  const sc=document.getElementById('send-count');if(sc)sc.textContent=contacts.length;
+  const p=getProfile(),sf=document.getElementById('send-from');
+  if(sf)sf.textContent=`${p.first||''} ${p.last||''}`.trim()||'Your Name';
+  updatePreview();
+}
+
+async function sendReport(){
+  const contacts=getContacts();
+  if(!contacts.length){toast('Add clients first!','error');return;}
+  const p=getProfile();if(!p.first){toast('Complete your profile first!','error');return;}
+  const btn=document.getElementById('send-btn');btn.disabled=true;btn.textContent='Sending…';
+  const cfg=gs('mrs_ejs',null),cities=getCities(),city=SEND_CITY||Object.keys(cities)[0],s=cities[city]||{};
+  const rates=getRates(),insights=getInsights();
+  const fromName=`${p.first} ${p.last||''}`.trim();
+  const mo=new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  if(cfg){
+    try{
+      emailjs.init(cfg.pub);let sent=0,failed=0;
+      for(const c of contacts){
+        try{
+          await emailjs.send(cfg.svc,cfg.tmpl,{
+            to_name:c.name,to_email:c.email,from_name:fromName,city,month:mo,
+            active:s.active||'',active_d:s.activeD||'',price:s.price||'',price_d:s.priceD||'',
+            dom:s.dom||'',dom_d:s.domD||'',mos:s.mos||'',mos_d:s.mosD||'',
+            mai:s.mai||'',market_type:s.mtype||'',mai_trend:s.mtrend||'',
+            mprice:s.mprice||'',mdom:s.mdom||'',mactive:s.mactive||'',myoy:s.myoy||'',
+            rate30:rates.r30||'',rate30c:rates.r30c||'',rate15:rates.r15||'',
+            arm:rates.arm||'',jumbo:rates.jmb||'',
+            company:p.company||'',phone:p.phone||'',title:p.title||'',
+          });sent++;
+        }catch(e){failed++;}
+        await new Promise(r=>setTimeout(r,300));
+      }
+      toast('✅ Sent to '+sent+' client'+(sent!==1?'s':'')+(failed?' ('+failed+' failed)':'')+'!','success');
+    }catch(e){toast('EmailJS error: '+e.message,'error');}
+  } else {
+    const c=contacts[0];
+    const sub=city+' Market Update — '+mo;
+    const body='Hi '+c.name.split(' ')[0]+',\n\nHere is your '+city+' real estate weekly snapshot:\n\nActive Listings: '+(s.active||'—')+' ('+s.activeD+')\nMedian Price: '+(s.price||'—')+'\nDays on Market: '+(s.dom||'—')+'\nMonths of Supply: '+(s.mos||'—')+'\nMAI Score: '+(s.mai||'—')+' ('+s.mtrend+')\n\nMortgage Rates: 30-yr '+rates.r30+' '+rates.r30c+'\n\n— '+fromName+'\n'+(p.company||'')+'\n'+(p.phone||'');
+    window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(c.email)+'&su='+encodeURIComponent(sub)+'&body='+encodeURIComponent(body),'_blank');
+    toast('Gmail opened — set up EmailJS for bulk sending','info');
+  }
+  btn.disabled=false;btn.textContent='Send Report to All Contacts';
+}
+
+/* PROFILE */
+function saveProfile(){
+  const p={};
+  ['first','last','title','company','phone','email'].forEach(k=>{p[k]=document.getElementById('pf-'+k)?.value.trim()||'';});
+  const users=getUsers();
+  if(CU&&users[CU.email]){users[CU.email].profile=p;saveUsers(users);CU.profile=p;document.getElementById('app-av').textContent=((p.first||'?')[0]+(p.last||'')[0]).toUpperCase();document.getElementById('app-name').textContent=p.first||'Agent';}
+  updatePreview();toast('Profile saved!','success');
+}
+
+/* EMAILJS */
+function loadEJSStatus(){
+  const cfg=gs('mrs_ejs',null),badge=document.getElementById('ejs-badge');
+  if(cfg){if(badge){badge.textContent='Active';badge.className='ejs-badge active';}document.getElementById('ejs-form-wrap').style.display='none';document.getElementById('ejs-active-wrap').style.display='';document.getElementById('ejs-svc-lbl').textContent=cfg.svc;emailjs.init(cfg.pub);}
+  else{if(badge){badge.textContent='Not Set Up';badge.className='ejs-badge';}document.getElementById('ejs-form-wrap').style.display='';document.getElementById('ejs-active-wrap').style.display='none';}
+}
+function saveEJS(){const pub=document.getElementById('ejs-pub').value.trim(),svc=document.getElementById('ejs-svc').value.trim(),tmpl=document.getElementById('ejs-tmpl').value.trim();if(!pub||!svc||!tmpl){toast('Fill all three fields.','error');return;}ss('mrs_ejs',{pub,svc,tmpl});emailjs.init(pub);loadEJSStatus();toast('✅ EmailJS activated!','success');}
+function resetEJS(){ss('mrs_ejs',null);loadEJSStatus();}
+
+/* ADMIN */
+function loadAdmin(){
+  loadEconAdmin();
+  renderAdminCitySelect();
+  renderAdminUsers();
+  loadAdminEJSStatus();
+  renderInsightsEditor(null);
+  // Load rates
+  const r=getRates();
+  [['ar-30','r30'],['ar-30c','r30c'],['ar-15','r15'],['ar-15c','r15c'],['ar-arm','arm'],['ar-armc','armc'],['ar-jmb','jmb'],['ar-jmbc','jmbc']].forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.value=r[key]||'';});
+}
+function renderAdminCitySelect(){
+  const cities=getCities(),sel=document.getElementById('admin-city-sel');
+  sel.innerHTML='<option value="">— select a market —</option>'+Object.keys(cities).map(c=>`<option value="${c}">${c}</option>`).join('');
+  document.getElementById('admin-city-fields').style.display='none';
+}
+function loadCityAdmin(){
+  const city=document.getElementById('admin-city-sel').value,fields=document.getElementById('admin-city-fields');
+  if(!city){fields.style.display='none';return;}
+  const s=getCities()[city]||{};fields.style.display='';
+  const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
+  sv('ac-active',s.active);sv('ac-active-d',s.activeD);sv('ac-price',s.price);sv('ac-price-d',s.priceD);
+  sv('ac-dom',s.dom);sv('ac-dom-d',s.domD);sv('ac-mos',s.mos);sv('ac-mos-d',s.mosD);
+  sv('ac-mai',s.mai);const mt=document.getElementById('ac-mtype');if(mt)mt.value=s.mtype||'balanced';
+  sv('ac-mtrend',s.mtrend);sv('ac-mprice',s.mprice);sv('ac-mdom',s.mdom);sv('ac-mactive',s.mactive);sv('ac-myoy',s.myoy);
+  renderInsightsEditor(city);
+}
+function saveCityAdmin(){
+  const city=document.getElementById('admin-city-sel').value;
+  if(!city){toast('Select a city first.','error');return;}
+  const gv=id=>document.getElementById(id)?.value.trim();
+  const cities=getCities();
+  cities[city]={
+    active:gv('ac-active'),activeD:gv('ac-active-d'),price:gv('ac-price'),priceD:gv('ac-price-d'),
+    dom:gv('ac-dom'),domD:gv('ac-dom-d'),mos:gv('ac-mos'),mosD:gv('ac-mos-d'),
+    mai:gv('ac-mai'),mtype:document.getElementById('ac-mtype')?.value||'balanced',mtrend:gv('ac-mtrend'),
+    mprice:gv('ac-mprice'),mdom:gv('ac-mdom'),mactive:gv('ac-mactive'),myoy:gv('ac-myoy'),
+  };
+  saveCities(cities);toast('✅ '+city+' stats saved!','success');
+}
+function addCity(){
+  const name=document.getElementById('new-city-name').value.trim();
+  if(!name){toast('Enter a city name.','error');return;}
+  const cities=getCities();if(cities[name]){toast('City already exists.','error');return;}
+  cities[name]={active:'',activeD:'',price:'',priceD:'',dom:'',domD:'',mos:'',mosD:'',mai:'30',mtype:'balanced',mtrend:'',mprice:'',mdom:'',mactive:'',myoy:''};
+  saveCities(cities);document.getElementById('new-city-name').value='';renderAdminCitySelect();toast('✅ '+name+' added!','success');
+}
+function saveRates(){
+  const r={r30:document.getElementById('ar-30').value.trim(),r30c:document.getElementById('ar-30c').value.trim(),r15:document.getElementById('ar-15').value.trim(),r15c:document.getElementById('ar-15c').value.trim(),arm:document.getElementById('ar-arm').value.trim(),armc:document.getElementById('ar-armc').value.trim(),jmb:document.getElementById('ar-jmb').value.trim(),jmbc:document.getElementById('ar-jmbc').value.trim()};
+  saveRatesStore(r);toast('✅ Rates saved!','success');
+}
+
+/* INSIGHTS EDITOR */
+function renderInsightsEditor(city){
+  const insights=city?getInsights(city):[],el=document.getElementById('insights-editor');
+  if(!el)return;
+  el.innerHTML=Array.from({length:5},(_, i)=>{
+    const ins=insights[i]||{h:'',b:''};
+    return `<div class="insight-edit"><label>Insight ${i+1}</label><div class="ie-row"><input class="ie-bold" id="ins-h-${i}" placeholder="Headline" value="${ins.h||''}"/><input class="ie-body" id="ins-b-${i}" placeholder="Body text…" value="${ins.b||''}"/></div></div>`;
+  }).join('');
+}
+function saveInsights(){
+  const city=document.getElementById('admin-city-sel').value;
+  if(!city){toast('Select a city first.','error');return;}
+  const ins=[];
+  for(let i=0;i<5;i++){
+    const h=document.getElementById('ins-h-'+i)?.value.trim(),b=document.getElementById('ins-b-'+i)?.value.trim();
+    if(h&&b) ins.push({h,b});
+  }
+  saveInsightsForCity(city,ins);toast('✅ '+city+' insights saved!','success');
+}
+
+/* SUB-ADMINS */
+async function addSubAdmin(){
+  const first=document.getElementById('na-first').value.trim(),last=document.getElementById('na-last').value.trim();
+  const email=document.getElementById('na-email').value.trim().toLowerCase(),pass=document.getElementById('na-pass').value;
+  const errEl=document.getElementById('na-err');errEl.style.display='none';
+  if(!first||!last||!email||pass.length<6){errEl.textContent='Fill all fields — password min 6 characters.';errEl.style.display='block';return;}
+  const users=getUsers();
+  if(users[email]||email===SA.email){errEl.textContent='An account with that email already exists.';errEl.style.display='block';return;}
+  users[email]={first,last,email,pass,profile:{first,last,email,title:'',company:'',phone:''},contacts:[],createdAt:new Date().toISOString()};
+  saveUsers(users);
+  ['na-first','na-last','na-email','na-pass'].forEach(id=>{document.getElementById(id).value='';});
+  renderAdminUsers();toast('✅ '+first+' '+last+' added!','success');
+  await sendWelcomeEmail(users[email]);
+}
+function renderAdminUsers(){
+  const users=Object.values(getUsers()),el=document.getElementById('admin-user-list');
+  if(!users.length){el.innerHTML='<div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-text">No users yet</div></div>';return;}
+  el.innerHTML=users.map(u=>`<div class="sa-row"><div class="sa-av">${(u.first[0]||'?').toUpperCase()}</div><div class="sa-info"><div class="sa-name">${u.first} ${u.last||''}</div><div class="sa-email">${u.email}</div></div><button class="btn-ghost btn-sm" onclick="removeUser('${u.email}')">Remove</button></div>`).join('');
+}
+function removeUser(email){if(!confirm('Remove '+email+'?'))return;const users=getUsers();delete users[email];saveUsers(users);renderAdminUsers();toast('User removed.','info');}
+async function sendWelcomeEmail(user){
+  const cfg=gs('mrs_admin_ejs',null);if(!cfg)return;
+  try{emailjs.init(cfg.pub);await emailjs.send(cfg.svc,cfg.tmpl,{to_name:`${user.first} ${user.last||''}`.trim(),to_email:user.email,from_name:'Braydon Dennis · MarketReady Stats',user_email:user.email,user_pass:user.pass,message:'Welcome to MarketReady Stats!',portal_url:window.location.href});toast('📧 Welcome email sent to '+user.first+'!','success');}catch(e){console.error(e);}
+}
+function loadAdminEJSStatus(){const cfg=gs('mrs_admin_ejs',null);document.getElementById('admin-ejs-form').style.display=cfg?'none':'';document.getElementById('admin-ejs-active').style.display=cfg?'':'none';}
+function saveAdminEJS(){const pub=document.getElementById('admin-ejs-pub').value.trim(),svc=document.getElementById('admin-ejs-svc').value.trim(),tmpl=document.getElementById('admin-ejs-tmpl').value.trim();if(!pub||!svc||!tmpl){toast('Fill all three fields.','error');return;}ss('mrs_admin_ejs',{pub,svc,tmpl});emailjs.init(pub);loadAdminEJSStatus();toast('✅ Welcome emails activated!','success');}
+function resetAdminEJS(){ss('mrs_admin_ejs',null);loadAdminEJSStatus();}
+
+/* MODAL / TOAST */
+function openModal(id){document.getElementById('modal-'+id).classList.add('open');}
+function closeModal(id){document.getElementById('modal-'+id).classList.remove('open');if(id==='add-contact'){document.getElementById('mc-name').value='';document.getElementById('mc-email').value='';}}
+function toast(msg,type='info'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),3200);}
+
+
+// ── AZ CITY SEARCH ──
+const AZ_CITIES_DB = [
+  {city:'Tempe',         county:'Maricopa', type:'balanced',active:'1,243',price:'$485,000',dom:'38',mos:'2.8',note:'Home to ASU · Urban core · Strong rental market'},
+  {city:'Queen Creek',   county:'Maricopa', type:'seller',  active:'892', price:'$598,000',dom:'29',mos:'2.1',note:'Fast-growing suburb · Master-planned communities'},
+  {city:'Surprise',      county:'Maricopa', type:'balanced',active:'1,580',price:'$422,000',dom:'42',mos:'3.2',note:'Northwest Valley · Active adult communities'},
+  {city:'Peoria',        county:'Maricopa', type:'balanced',active:'1,320',price:'$458,000',dom:'40',mos:'3.0',note:'Lake Pleasant nearby · Strong family market'},
+  {city:'Glendale',      county:'Maricopa', type:'buyer',   active:'2,140',price:'$388,000',dom:'55',mos:'4.1',note:'Sports venues · Diverse neighborhoods'},
+  {city:'Avondale',      county:'Maricopa', type:'balanced',active:'780', price:'$412,000',dom:'44',mos:'3.3',note:'West Valley · Growing job market'},
+  {city:'Goodyear',      county:'Maricopa', type:'seller',  active:'910', price:'$475,000',dom:'31',mos:'2.3',note:'West Valley gem · Top-ranked city to live'},
+  {city:'Scottsdale',    county:'Maricopa', type:'seller',  active:'3,200',price:'$1,000,000',dom:'52',mos:'2.8',note:'Luxury leader · Strong appreciation'},
+  {city:'Buckeye',       county:'Maricopa', type:'balanced',active:'1,820',price:'$385,000',dom:'48',mos:'3.6',note:'Fastest growing in AZ · Affordable entry point'},
+  {city:'Maricopa City', county:'Pinal',    type:'balanced',active:'640', price:'$342,000',dom:'51',mos:'3.8',note:'Pinal County · Affordable · Long commute to Phoenix'},
+  {city:'Fountain Hills', county:'Maricopa',type:'seller',  active:'310', price:'$785,000',dom:'44',mos:'2.6',note:'Luxury enclave · Mountain views · Tight inventory'},
+  {city:'Cave Creek',    county:'Maricopa', type:'seller',  active:'185', price:'$895,000',dom:'47',mos:'2.9',note:'Desert lifestyle · Equestrian · Upscale rural'},
+  {city:'Paradise Valley',county:'Maricopa',type:'seller',  active:'220', price:'$3,200,000',dom:'68',mos:'3.1',note:'Ultra luxury · Highest median price in AZ metro'},
+  {city:'Litchfield Park',county:'Maricopa',type:'seller',  active:'195', price:'$612,000',dom:'28',mos:'2.0',note:'Historic master plan · Low crime · High demand'},
+  {city:'Ahwatukee',     county:'Maricopa', type:'balanced',active:'480', price:'$528,000',dom:'36',mos:'2.7',note:'South Phoenix foothills · Family suburb'},
+  {city:'Tucson',        county:'Pima',     type:'buyer',   active:'4,820',price:'$295,000',dom:'62',mos:'4.8',note:'Second largest AZ city · University market · Affordable'},
+  {city:'Flagstaff',     county:'Coconino', type:'seller',  active:'390', price:'$672,000',dom:'38',mos:'2.4',note:'Northern AZ · Mountain market · NAU anchored'},
+  {city:'Sedona',        county:'Yavapai',  type:'seller',  active:'210', price:'$895,000',dom:'58',mos:'3.0',note:'Luxury resort market · High appreciation · Limited supply'},
+  {city:'Prescott',      county:'Yavapai',  type:'balanced',active:'820', price:'$548,000',dom:'49',mos:'3.4',note:'Mile-high city · Retiree favorite · Growing market'},
+  {city:'Yuma',          county:'Yuma',     type:'balanced',active:'1,050',price:'$298,000',dom:'57',mos:'4.2',note:'Border city · Military · Seasonal snowbirds'},
+  // ZIP codes
+  {city:'85251', county:'Scottsdale', type:'seller',  active:'285', price:'$748,000',dom:'41',mos:'2.5',note:'Old Town Scottsdale · Walkable · Luxury condos'},
+  {city:'85254', county:'Scottsdale', type:'seller',  active:'420', price:'$1,150,000',dom:'55',mos:'2.9',note:'North Scottsdale · Golf communities · High appreciation'},
+  {city:'85206', county:'Mesa',       type:'balanced',active:'390', price:'$412,000',dom:'43',mos:'3.1',note:'East Mesa · Established neighborhoods · Good value'},
+  {city:'85233', county:'Gilbert',    type:'seller',  active:'310', price:'$558,000',dom:'27',mos:'2.0',note:'Central Gilbert · Top-rated schools · Strong family demand'},
+  {city:'85296', county:'Gilbert',    type:'seller',  active:'268', price:'$575,000',dom:'25',mos:'1.9',note:'South Gilbert · Newer builds · Master-planned · Growing fast'},
+  {city:'85374', county:'Surprise',   type:'balanced',active:'445', price:'$435,000',dom:'44',mos:'3.3',note:'Northwest Surprise · Newer communities · Active adult options'},
+  {city:'85383', county:'Peoria',     type:'balanced',active:'385', price:'$468,000',dom:'41',mos:'3.0',note:'North Peoria · Vistancia area · Master-planned · Family market'},
+];
+
+function doAZSearch(){
+  const q=(document.getElementById('az-search-input')?.value||'').trim().toLowerCase();
+  const el=document.getElementById('az-results');
+  if(!q){el.innerHTML='';return;}
+  const matches=AZ_CITIES_DB.filter(c=>
+    c.city.toLowerCase().includes(q)||
+    c.county.toLowerCase().includes(q)||
+    (c.pop&&c.pop.toLowerCase().includes(q))
+  ).slice(0,6);
+  if(!matches.length){
+    el.innerHTML=`<div class="az-no-results">No results for "<strong>${q}</strong>" — try a city name or ZIP code.</div>`;
+    return;
+  }
+  el.innerHTML=matches.map((c,i)=>{
+    const badgeLabel=c.type==='seller'?"Seller's Market":c.type==='buyer'?"Buyer's Market":"Balanced Market";
+    return `<div class="az-result-card" onclick="selectSearchedCity(${i},${JSON.stringify(matches).split('').map(ch=>ch==='"'?'&quot;':ch).join('')})" style="cursor:pointer">
+      <div class="az-result-icon">${c.city[0]}</div>
+      <div class="az-result-info">
+        <div class="az-result-city">${c.city}</div>
+        <div class="az-result-detail">${c.county} County · ${c.note}</div>
+      </div>
+      <div class="az-result-badge ${c.type}">${badgeLabel}</div>
+    </div>`;
+  }).join('');
+}
+
+// Store last search results for click handler
+let _lastSearchResults=[];
+
+function doAZSearchWithStore(){
+  const q=(document.getElementById('az-search-input')?.value||'').trim().toLowerCase();
+  const el=document.getElementById('az-results');
+  if(!q){el.innerHTML='';_lastSearchResults=[];return;}
+  const matches=AZ_CITIES_DB.filter(c=>
+    c.city.toLowerCase().includes(q)||
+    c.county.toLowerCase().includes(q)||
+    (c.pop&&c.pop.toLowerCase().includes(q))
+  ).slice(0,6);
+  _lastSearchResults=matches;
+  if(!matches.length){
+    el.innerHTML=`<div class="az-no-results">No results for "<strong>${q}</strong>" — try a city name or ZIP code.</div>`;
+    return;
+  }
+  renderSearchResults(matches);
+}
+
+function renderSearchResults(matches){
+  const el=document.getElementById('az-results');
+  el.innerHTML=matches.map((c,i)=>{
+    const badgeLabel=c.type==='seller'?"Seller's Market":c.type==='buyer'?"Buyer's Market":"Balanced Market";
+    return `<div class="az-result-card" onclick="selectSearchedCity(${i})" style="cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f0f4fa'" onmouseleave="this.style.background=''">
+      <div class="az-result-icon">${c.city[0]}</div>
+      <div class="az-result-info">
+        <div class="az-result-city">${c.city}</div>
+        <div class="az-result-detail">${c.county} County · ${c.note}</div>
+      </div>
+      <div class="az-result-badge ${c.type}">${badgeLabel}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectSearchedCity(idx){
+  const c=_lastSearchResults[idx];
+  if(!c) return;
+
+  // If city matches an admin-managed city, switch to it directly
+  const cities=getCities();
+  const matchKey=Object.keys(cities).find(k=>k.toLowerCase()===c.city.toLowerCase()||k.toLowerCase().includes(c.city.toLowerCase()));
+  if(matchKey){
+    selectCity(matchKey);
+    document.getElementById('az-results').innerHTML='';
+    document.getElementById('az-search-input').value='';
+    return;
+  }
+
+  // Build MAI score from market type
+  const maiScore=c.type==='seller'?42:c.type==='buyer'?18:30;
+  const mPct=Math.min(100,Math.round(maiScore/60*100));
+  const badgeLabel=c.type==='seller'?"Seller's Market":c.type==='buyer'?"Buyer's Market":"Balanced Market";
+
+  // Split note into up to 3 context pieces
+  const noteParts=c.note.split('·').map(s=>s.trim()).filter(Boolean);
+
+  // Hero
+  document.getElementById('hero-city').textContent=c.city;
+  document.getElementById('hero-date').textContent=new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+
+  // KPI boxes — populate from AZ_CITIES_DB
+  const setKpi=(vi,v,di,d)=>{const ve=document.getElementById(vi);if(ve)ve.textContent=v||'—';const de=document.getElementById(di);if(de)de.textContent=d||'';};
+  setKpi('k-active', c.active ? c.active         : '—', 'k-active-d', c.active ? 'Estimate'  : '');
+  setKpi('k-price',  c.price  ? c.price          : '—', 'k-price-d',  c.price  ? 'Estimate'  : '');
+  setKpi('k-dom',    c.dom    ? c.dom+' days'    : '—', 'k-dom-d',    c.dom    ? 'Estimate'  : '');
+  setKpi('k-mos',    c.mos    ? c.mos+' mos'     : '—', 'k-mos-d',    c.mos    ? 'Estimate'  : '');
+
+  // MAI card — fully populated from AZ_CITIES_DB
+  document.getElementById('mai-card').innerHTML=`
+    <div class="mai-card-head">
+      <div class="mai-city-name">${c.city}</div>
+      <div class="mai-badge ${c.type}">${badgeLabel}</div>
+    </div>
+    <div class="mai-score-row">
+      <div class="mai-score-num">${maiScore}</div>
+      <div class="mai-bar-wrap">
+        <div class="mai-bar-track"><div class="mai-bar-fill ${c.type}" style="width:${mPct}%"></div></div>
+        <div class="mai-trend">Market profile estimate</div>
+      </div>
+    </div>
+    <div class="mai-stats-grid">
+      <div class="mai-stat"><div class="mai-stat-lbl">County</div><div class="mai-stat-val">${c.county}</div></div>
+      ${noteParts[0]?`<div class="mai-stat"><div class="mai-stat-lbl">Market Note</div><div class="mai-stat-val" style="font-size:11px">${noteParts[0]}</div></div>`:''}
+      ${noteParts[1]?`<div class="mai-stat"><div class="mai-stat-lbl">Detail</div><div class="mai-stat-val" style="font-size:11px">${noteParts[1]}</div></div>`:''}
+      ${noteParts[2]?`<div class="mai-stat"><div class="mai-stat-lbl">More</div><div class="mai-stat-val" style="font-size:11px">${noteParts[2]}</div></div>`:''}
+    </div>`;
+
+  // Insights — hide cleanly
+  const il=document.getElementById('insights-list');
+  if(il) il.innerHTML='';
+  const is=document.getElementById('insights-section');
+  if(is) is.style.display='none';
+
+  // Deselect city tabs
+  document.querySelectorAll('#city-tabs .city-tab').forEach(t=>t.classList.remove('active'));
+  ACTIVE_CITY=null;
+
+  // Collapse search results
+  document.getElementById('az-results').innerHTML='';
+  document.getElementById('az-search-input').value=c.city;
+}
+
+// ── ECONOMIC INDICATORS (manually updated by admin) ──
+function defaultEcon(){
+  return {
+    unemp:   {val:'4.2%',  delta:'▲ +0.1% vs prior',  cls:'ec-blue',  label:'AZ Unemployment',     note:'Arizona — Seasonally Adj.',   invert:true},
+    fedfunds:{val:'4.33%', delta:'→ Unchanged',         cls:'ec-red',   label:'Fed Funds Rate',       note:'Federal Reserve target'},
+    tsy10:   {val:'4.25%', delta:'▲ +0.12% vs prior',  cls:'ec-gold',  label:'10-Yr Treasury Yield', note:'Bond market rate signal'},
+    mort30:  {val:'6.65%', delta:'▲ +0.12% vs prior',  cls:'ec-blue',  label:'30-Yr Mortgage Rate',  note:'National weekly average'},
+    permits: {val:'4,187', delta:'▼ -3.2% vs prior',   cls:'ec-green', label:'AZ Building Permits',  note:'New units/month (S.A.)'},
+    hpi:     {val:'322.4', delta:'▲ +0.4% vs prior',   cls:'ec-teal',  label:'US Home Price Index',  note:'Case-Shiller National HPI'},
+  };
+}
+function getEconData(){ return gs('mrs_econ', defaultEcon()); }
+function saveEconData(d){ ss('mrs_econ', d); }
+
+function renderEconCards(){
+  const grid=document.getElementById('econ-grid');
+  const ts=document.getElementById('econ-timestamp');
+  if(!grid) return;
+  const d=getEconData();
+  grid.innerHTML=Object.values(d).map(s=>{
+    const up=s.delta&&s.delta.includes('▲'); const dn=s.delta&&s.delta.includes('▼');
+    const dCls=s.invert?(up?'down':dn?'up':''):(up?'up':dn?'down':'');
+    return `<div class="econ-card ${s.cls}">
+      <div class="econ-lbl">${s.label}</div>
+      <div class="econ-val">${s.val}</div>
+      <div class="econ-delta ${dCls}">${s.delta||''}</div>
+      <div class="econ-note">${s.note}</div>
+    </div>`;
+  }).join('');
+  const saved=gs('mrs_econ_date','');
+  if(ts) ts.textContent=saved?'Updated by admin · '+saved:'Default values — update weekly in Admin panel';
+}
+
+// Refresh button: tries live FRED via proxy (works when portal is hosted, not from file://)
+async function fetchEconData(){
+  const btn=document.querySelector('.econ-refresh');
+  if(btn){btn.textContent='⏳ Trying…';btn.disabled=true;}
+  const KEY='a59dfc4e3e8cf8ce1e74ef14be7cbc24';
+  const proxy=id=>`https://api.allorigins.win/raw?url=${encodeURIComponent('https://api.stlouisfed.org/fred/series/observations?series_id='+id+'&api_key='+KEY+'&limit=3&sort_order=desc&file_type=json')}`;
+  const tryOne=async id=>{try{const r=await fetch(proxy(id),{signal:AbortSignal.timeout(5000)});if(!r.ok)return null;const d=await r.json();const o=(d.observations||[]).filter(x=>x.value!=='.');return o.length?o:null;}catch{return null;}};
+  const map={unemp:'AZURN',fedfunds:'FEDFUNDS',tsy10:'DGS10',mort30:'MORTGAGE30US',permits:'AZBPPRIVSA',hpi:'CSUSHPINSA'};
+  const d=getEconData(); let n=0;
+  for(const[k,id]of Object.entries(map)){
+    const obs=await tryOne(id);if(!obs)continue;
+    const cur=parseFloat(obs[0].value),prv=obs.length>1?parseFloat(obs[1].value):null,dif=prv!=null?cur-prv:null;
+    const fmt=k==='permits'?Math.round(cur).toLocaleString():cur.toFixed(cur>=100?1:2);
+    const suf=k==='permits'?'':'%';
+    d[k].val=fmt+suf;
+    d[k].delta=dif!=null?(dif>0?'▲ +':'▼ ')+Math.abs(dif).toFixed(cur>=100?0:2)+suf+' vs prior':'→ Unchanged';
+    n++;
+  }
+  if(n>0){saveEconData(d);ss('mrs_econ_date',new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}));renderEconCards();toast('✅ Live data loaded from FRED!','success');}
+  else toast('Live fetch requires a hosted URL (not file://). Update manually in Admin panel.','info');
+  if(btn){btn.textContent='↻ Refresh';btn.disabled=false;}
+}
+
+function saveEconAdmin(){
+  const g=id=>document.getElementById(id)?.value.trim();
+  const d=getEconData();
+  const map=[['unemp','ec-unemp'],['fedfunds','ec-fed'],['tsy10','ec-tsy'],['mort30','ec-mort'],['permits','ec-perm'],['hpi','ec-hpi']];
+  map.forEach(([k,p])=>{if(g(p+'-val'))d[k].val=g(p+'-val');if(g(p+'-d'))d[k].delta=g(p+'-d');});
+  saveEconData(d);ss('mrs_econ_date',new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}));
+  renderEconCards();toast('✅ Economic indicators saved!','success');
+}
+function loadEconAdmin(){
+  const d=getEconData();
+  const map=[['unemp','ec-unemp'],['fedfunds','ec-fed'],['tsy10','ec-tsy'],['mort30','ec-mort'],['permits','ec-perm'],['hpi','ec-hpi']];
+  map.forEach(([k,p])=>{const v=document.getElementById(p+'-val'),dd=document.getElementById(p+'-d');if(v)v.value=d[k].val;if(dd)dd.value=d[k].delta;});
+}
+
+
+
+
+
+// -- AI MARKET REFRESH --
+async function runAIRefresh(){
+  const btn = document.getElementById('ai-refresh-btn');
+  const status = document.getElementById('ai-refresh-status');
+  if(btn){ btn.disabled=true; btn.textContent='Refreshing...'; }
+  if(status) status.textContent = 'Calling Claude AI - this may take 15-20 seconds...';
+
+  try {
+    const resp = await fetch('/api/ai-refresh', { method: 'POST' });
+    const data = await resp.json();
+
+    if(!data.ok || !data.cities){
+      if(status) status.textContent = 'Error: ' + (data.error || 'Unknown error');
+      toast('AI refresh failed - check Netlify env vars', 'error');
+      return;
+    }
+
+    // Merge AI data into existing cities
+    const existing = getCities();
+    let updated = 0;
+    for(const [city, stats] of Object.entries(data.cities)){
+      if(existing[city]){
+        // Preserve admin-entered insights, merge stats
+        const insights = existing[city].insights || [];
+        existing[city] = { ...existing[city], ...stats, insights };
+        updated++;
+      }
+    }
+    saveCities(existing);
+    ss('mrs_ai_refresh_date', data.updated);
+    renderCityTabs();
+    if(status) status.textContent = 'Updated ' + updated + ' cities on ' + data.updated;
+    toast('AI refreshed ' + updated + ' cities!', 'success');
+
+  } catch(e) {
+    if(status) status.textContent = 'Network error: ' + e.message;
+    toast('AI refresh failed: ' + e.message, 'error');
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent='✨ Refresh All Cities with AI'; }
+  }
+}
+
+// -- SOCIAL SHARE --
+const SITE_URL = 'https://marketready-stats.netlify.app';
+
+function buildShareText(){
+  const city   = document.getElementById('hero-city')?.textContent || 'Arizona';
+  const active = document.getElementById('k-active')?.textContent  || '-';
+  const price  = document.getElementById('k-price')?.textContent   || '-';
+  const dom    = document.getElementById('k-dom')?.textContent     || '-';
+  const mos    = document.getElementById('k-mos')?.textContent     || '-';
+  const mo     = new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const badge  = document.querySelector('.mai-badge');
+  const mtype  = badge ? badge.textContent : '';
+  let t = city + ' Real Estate - ' + mo + '\n\n';
+  if(active!=='-') t += 'Active Listings: ' + active + '\n';
+  if(price!=='-')  t += 'Median Sale Price: ' + price + '\n';
+  if(dom!=='-')    t += 'Avg Days on Market: ' + dom + '\n';
+  if(mos!=='-')    t += 'Months of Supply: ' + mos + '\n';
+  if(mtype)        t += '\nMarket Status: ' + mtype + '\n';
+  t += '\nData via MarketReady Stats | Great American Title Agency';
+  return t;
+}
+
+function openShareSheet(){
+  const city = document.getElementById('hero-city')?.textContent || 'Arizona';
+  document.getElementById('share-panel-sub').textContent = city + ' Real Estate Market Stats';
+  document.getElementById('share-text-box').textContent = buildShareText();
+  document.getElementById('share-sheet').classList.add('open');
+}
+
+function closeShareSheet(){
+  document.getElementById('share-sheet').classList.remove('open');
+}
+
+function shareTo(platform){
+  const text = buildShareText();
+  const city = document.getElementById('hero-city')?.textContent || 'Arizona';
+  const mo   = new Date().toLocaleDateString('en-US',{month:'short',year:'numeric'});
+  const url  = encodeURIComponent(SITE_URL);
+  const tweet = encodeURIComponent(city + ' real estate market stats - ' + mo + ' ' + SITE_URL + ' #ArizonaRealEstate #MarketStats #ARMLS');
+  if(platform==='facebook'){
+    window.open('https://www.facebook.com/sharer/sharer.php?u='+url, '_blank', 'width=600,height=500');
+  } else if(platform==='twitter'){
+    window.open('https://twitter.com/intent/tweet?text='+tweet, '_blank', 'width=600,height=400');
+  } else if(platform==='linkedin'){
+    window.open('https://www.linkedin.com/sharing/share-offsite/?url='+url, '_blank', 'width=600,height=500');
+  } else if(platform==='copy'){
+    navigator.clipboard.writeText(text).then(function(){
+      toast('Stats copied to clipboard!','success');
+      closeShareSheet();
+    }).catch(function(){
+      var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+      toast('Copied to clipboard!','success');
+      closeShareSheet();
+    });
+    return;
+  }
+}
+
+function copyShareUrl(){
+  var input = document.getElementById('share-url-input');
+  navigator.clipboard.writeText(input.value).then(function(){toast('Link copied!','success');}).catch(function(){input.select();document.execCommand('copy');toast('Link copied!','success');});
+}
+
+/* AUTO LOGIN */
+(function init(){
+  const sess=gs('mrs_session',null);if(!sess)return;
+  if(sess.role==='admin'){loginAdmin();return;}
+  if(sess.role==='user'&&sess.email){const users=getUsers();if(users[sess.email])loginUser(users[sess.email]);}
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <!-- SHARE SHEET -->
+  <div class="share-sheet" id="share-sheet" onclick="if(event.target===this||event.target.classList.contains('share-backdrop'))closeShareSheet()">
+    <div class="share-backdrop"></div>
+    <div class="share-panel">
+      <button class="share-close" onclick="closeShareSheet()">×</button>
+      <div class="share-handle"></div>
+      <div class="share-panel-title">Share Market Report</div>
+      <div class="share-panel-sub" id="share-panel-sub">Arizona Real Estate Stats</div>
+      <div class="share-text-box" id="share-text-box"></div>
+      <div class="share-platforms">
+        <div class="share-plat fb" onclick="shareTo('facebook')">
+          <div class="share-plat-icon">📘</div>
+          <div class="share-plat-lbl">Facebook</div>
+        </div>
+        <div class="share-plat tw" onclick="shareTo('twitter')">
+          <div class="share-plat-icon" style="font-size:15px;font-weight:800;color:#fff;font-family:sans-serif">X</div>
+          <div class="share-plat-lbl">X / Twitter</div>
+        </div>
+        <div class="share-plat li" onclick="shareTo('linkedin')">
+          <div class="share-plat-icon">💼</div>
+          <div class="share-plat-lbl">LinkedIn</div>
+        </div>
+        <div class="share-plat copy" onclick="shareTo('copy')">
+          <div class="share-plat-icon">📋</div>
+          <div class="share-plat-lbl">Copy Text</div>
+        </div>
+      </div>
+      <div class="share-copy-row">
+        <input class="share-copy-input" id="share-url-input" value="https://marketready-stats.netlify.app" readonly/>
+        <button class="share-copy-btn" onclick="copyShareUrl()">Copy Link</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
